@@ -1,3 +1,5 @@
+import { ToolNotFoundError } from "../errors.js";
+
 export type ToolRuntime = "stdio" | "http" | "grpc" | "local";
 
 export type ToolDefinition = {
@@ -40,7 +42,7 @@ export class ToolRegistry {
 
   async call(name: string, input: unknown): Promise<unknown> {
     const connector = this.connectors.get(name);
-    if (!connector) throw new Error(`[ToolRegistry] tool "${name}" is not registered`);
+    if (!connector) throw new ToolNotFoundError(name);
     return connector.call(input);
   }
 }

@@ -1,5 +1,7 @@
 export * from "./AgentSDK.js";
 export * from "./types.js";
+export * from "./errors.js";
+export * from "./validation.js";
 
 export * from "./core/Brain.js";
 export * from "./core/contracts.js";
@@ -7,6 +9,7 @@ export * from "./core/providers/OpenAIProvider.js";
 export * from "./core/providers/PlaceholderProviders.js";
 
 export * from "./pipelines/contracts.js";
+export * from "./pipelines/PipelineBase.js";
 export * from "./pipelines/ScrapePipeline.js";
 export * from "./pipelines/OnboardingApiPipeline.js";
 export * from "./pipelines/declarative/DeclarativePipeline.js";

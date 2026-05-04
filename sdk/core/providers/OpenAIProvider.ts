@@ -6,6 +6,7 @@ import type {
   LLMProvider,
 } from "../contracts.js";
 import type { ToolRegistry } from "../../tools/contracts.js";
+import { ProviderRequestError, ValidationError } from "../../errors.js";
 
 type OpenAIProviderConfig = {
   apiKey?: string;
@@ -37,7 +38,7 @@ export class OpenAIProvider implements LLMProvider {
       },
       body: JSON.stringify({
         model: input.model || this.config.defaultModel,
-        messages: input.messages,
+        messages: input.messages.map(toOpenAIMessage),
         tools: resolvedTools?.map((tool) => ({
           type: "function",
           function: {
@@ -50,7 +51,7 @@ export class OpenAIProvider implements LLMProvider {
     });
 
     if (!response.ok) {
-      throw new Error(`[OpenAIProvider] request failed with ${response.status}: ${await response.text()}`);
+      throw new ProviderRequestError("OpenAIProvider", response.status, await response.text());
     }
 
     const json = await response.json() as {
@@ -101,4 +102,39 @@ function safeJson(value: string): unknown {
   } catch {
     return value;
   }
+}
+
+function toOpenAIMessage(message: BrainGenerateInput["messages"][number]): Record<string, unknown> {
+  if (message.role === "assistant" && message.toolCalls?.length) {
+    return {
+      role: "assistant",
+      content: message.content || null,
+      tool_calls: message.toolCalls.map((call) => ({
+        id: call.id,
+        type: "function",
+        function: {
+          name: call.name,
+          arguments: JSON.stringify(call.input ?? {}),
+        },
+      })),
+    };
+  }
+
+  if (message.role === "tool") {
+    if (!message.toolCallId) {
+      throw new ValidationError("[OpenAIProvider] tool messages require toolCallId");
+    }
+    return {
+      role: "tool",
+      tool_call_id: message.toolCallId,
+      name: message.name,
+      content: message.content,
+    };
+  }
+
+  return {
+    role: message.role,
+    content: message.content,
+    ...(message.name ? { name: message.name } : {}),
+  };
 }

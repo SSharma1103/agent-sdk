@@ -1,5 +1,5 @@
 import type { BrainGenerateInput, BrainGenerateOutput, LLMProvider } from "../contracts.js";
-import { NotImplementedError } from "../Brain.js";
+import { NotImplementedError } from "../../errors.js";
 
 export class AnthropicProvider implements LLMProvider {
   readonly name = "anthropic";

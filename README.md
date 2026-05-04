@@ -36,7 +36,7 @@ import {
   MemoryStore,
   OpenAIProvider,
   ToolRegistry,
-} from "@agent-sdk/orchestration";
+} from "@myui/agent-sdk";
 
 const storage = new MemoryStore();
 const tools = new ToolRegistry();
@@ -70,6 +70,98 @@ await sdk.runPipeline("email", {
     subject: "Pricing",
     body: "Can you send pricing?",
   },
+});
+```
+
+## Customizable Pipelines
+
+Pipelines can be customized at two layers:
+
+- Code-first pipelines can expose lifecycle hooks through `PipelineHooks`.
+- Config-driven pipelines can use `DeclarativePipeline` with mapped inputs, mapped outputs, conditional steps, retries, fallbacks, and nested pipelines.
+- Pipeline input can be validated with any schema object that exposes `parse` or `safeParse`, including Zod schemas.
+
+```ts
+import {
+  AgentSDK,
+  DeclarativePipeline,
+  LocalToolConnector,
+  ToolRegistry,
+} from "@myui/agent-sdk";
+
+const tools = new ToolRegistry();
+tools.register(new LocalToolConnector("normalize", async (input) => input));
+
+const sdk = new AgentSDK({
+  hooks: {
+    beforeRun: ({ pipelineName }) => console.info("starting", pipelineName),
+    onError: ({ error }) => ({ handled: false, error }),
+  },
+});
+
+sdk.registerPipeline(
+  new DeclarativePipeline(
+    {
+      name: "support-intake",
+      steps: [
+        {
+          id: "normalized",
+          type: "tool",
+          name: "normalize",
+          mapInput: (state) => state.input,
+          retry: 1,
+        },
+        {
+          id: "draft",
+          type: "llm",
+          model: "gpt-4o-mini",
+          when: (state) => Boolean(state.steps.normalized),
+          prompt: (state) => `Draft a concise response for ${JSON.stringify(state.current)}`,
+        },
+      ],
+    },
+    { brain, tools },
+  ),
+);
+```
+
+Built-in pipelines also expose domain hooks. For example, `EmailPipeline` can customize rule matching, prompt construction, and tool selection without forking the pipeline:
+
+```ts
+new EmailPipeline({
+  brain,
+  storage,
+  tools,
+  hooks: {
+    matchRule: (rule, email) => email.subject.includes(rule.match.value),
+    buildMessages: (email, pipeline) => [
+      { role: "system", content: pipeline.context },
+      { role: "user", content: `Reply to: ${email.body}` },
+    ],
+    selectTools: () => ["reply_to_thread"],
+  },
+});
+```
+
+```ts
+sdk.registerPipeline({
+  name: "validated",
+  inputSchema: z.object({ name: z.string() }),
+  async run(input) {
+    return `Hello ${input.name}`;
+  },
+});
+```
+
+`Brain.run()` executes model tool calls when a `ToolRegistry` is configured. The provider returns tool calls, the SDK calls matching tools, appends tool results, and continues until the model returns final text.
+
+```ts
+tools.register(new LocalToolConnector("lookup_customer", async ({ id }) => ({ id, plan: "pro" })));
+
+const result = await brain.run({
+  model: "gpt-4o-mini",
+  messages: [{ role: "user", content: "Look up customer cus_123 and summarize their plan." }],
+  tools: ["lookup_customer"],
 });
 ```
 

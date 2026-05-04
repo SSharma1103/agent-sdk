@@ -1,6 +1,7 @@
 import type { Brain } from "./core/Brain.js";
 import { Orchestrator, type OrchestratorConfig, type Strategy } from "./orchestrator/Orchestrator.js";
 import type { Pipeline } from "./pipelines/contracts.js";
+import type { PipelineRunOptions } from "./pipelines/contracts.js";
 import type { Storage } from "./storage/contracts.js";
 import type { Transport } from "./transport/contracts.js";
 
@@ -21,6 +22,10 @@ export class AgentSDK {
       storage: config.storage,
       logger: config.logger,
       defaultMode: config.defaultMode,
+      metadata: config.metadata,
+      hooks: config.hooks,
+      errorPolicy: config.errorPolicy,
+      fallbackOutput: config.fallbackOutput,
     });
   }
 
@@ -40,8 +45,8 @@ export class AgentSDK {
     });
   }
 
-  runPipeline<T = unknown>(name: string, input: unknown): Promise<T> {
-    return this.orchestrator.run<T>(name, input);
+  runPipeline<T = unknown>(name: string, input: unknown, options?: PipelineRunOptions): Promise<T> {
+    return this.orchestrator.run<T>(name, input, options);
   }
 
   runStrategy(strategy: Strategy, steps: Array<{ name: string; input: unknown }>): Promise<unknown[]> {

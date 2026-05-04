@@ -1,9 +1,35 @@
 import type { Brain } from "../../core/Brain.js";
+import type { ModelMessage } from "../../core/contracts.js";
 import type { Pipeline } from "../contracts.js";
 import type { Storage, WorkflowRule } from "../../storage/contracts.js";
+import type { EmailPipelineRecord } from "../../storage/contracts.js";
 import type { ToolRegistry } from "../../tools/contracts.js";
+import type { ToolDefinition } from "../../tools/contracts.js";
 import type { EmailPipelineConfigPatch, EmailPipelineInput, EmailPipelineOutput, IncomingEmail } from "./types.js";
 import { createId } from "../../utils/id.js";
+
+export type EmailPipelineHooks = {
+  matchRule?(
+    rule: WorkflowRule,
+    email: IncomingEmail,
+    pipeline: EmailPipelineRecord,
+  ): boolean | Promise<boolean>;
+  onRuleMatched?(
+    rule: WorkflowRule,
+    email: IncomingEmail,
+    pipeline: EmailPipelineRecord,
+  ): EmailPipelineOutput | void | Promise<EmailPipelineOutput | void>;
+  onNoMatchingRule?(
+    email: IncomingEmail,
+    pipeline: EmailPipelineRecord,
+  ): EmailPipelineOutput | void | Promise<EmailPipelineOutput | void>;
+  buildMessages?(email: IncomingEmail, pipeline: EmailPipelineRecord): ModelMessage[] | Promise<ModelMessage[]>;
+  selectTools?(
+    email: IncomingEmail,
+    pipeline: EmailPipelineRecord,
+    tools?: ToolRegistry,
+  ): ToolDefinition[] | string[] | undefined | Promise<ToolDefinition[] | string[] | undefined>;
+};
 
 export type EmailPipelineDeps = {
   storage: Storage;
@@ -12,6 +38,7 @@ export type EmailPipelineDeps = {
   shareBaseUrl?: string;
   defaultModel?: string;
   defaultProvider?: string;
+  hooks?: EmailPipelineHooks;
 };
 
 export class EmailPipeline implements Pipeline<EmailPipelineInput, EmailPipelineOutput> {
@@ -90,29 +117,33 @@ export class EmailPipeline implements Pipeline<EmailPipelineInput, EmailPipeline
     if (!pipeline) throw new Error("[EmailPipeline] no pipeline found for token");
 
     for (const rule of pipeline.rules) {
-      if (!matchesRule(rule, email)) continue;
+      const matched = this.deps.hooks?.matchRule
+        ? await this.deps.hooks.matchRule(rule, email, pipeline)
+        : matchesRule(rule, email);
+      if (!matched) continue;
+      const custom = await this.deps.hooks?.onRuleMatched?.(rule, email, pipeline);
+      if (custom) return custom;
       if (rule.action.kind === "reply") return { handled: "rule" as const, rule, reply: rule.action.text };
       if (rule.action.kind === "skip") return { handled: "skipped" as const, rule };
       if (rule.action.kind === "forward") return { handled: "rule" as const, rule };
     }
 
+    const noRuleOutput = await this.deps.hooks?.onNoMatchingRule?.(email, pipeline);
+    if (noRuleOutput) return noRuleOutput;
+
     if (!pipeline.keyId) {
       throw new Error("[EmailPipeline] Brain requires keyId to be set");
     }
 
+    const messages = await this.buildMessages(email, pipeline);
+    const selectedTools = await this.deps.hooks?.selectTools?.(email, pipeline, this.deps.tools);
     const result = await this.deps.brain.run({
       userId: pipeline.userId,
       keyId: pipeline.keyId,
       provider: pipeline.provider,
       model: pipeline.model,
-      messages: [
-        { role: "system", content: pipeline.context },
-        {
-          role: "user",
-          content: `Subject: ${email.subject}\nFrom: ${email.from}\n\n${email.body}`,
-        },
-      ],
-      tools: this.deps.tools?.list(),
+      messages,
+      tools: selectedTools ?? this.deps.tools?.list(),
       metadata: { pipeline: this.name, threadId: email.threadId },
     });
 
@@ -139,6 +170,18 @@ export class EmailPipeline implements Pipeline<EmailPipelineInput, EmailPipeline
       throw new Error("[EmailPipeline] storage adapter must implement saveEmailPipeline");
     }
     return this.deps.storage.saveEmailPipeline(record);
+  }
+
+  private async buildMessages(email: IncomingEmail, pipeline: EmailPipelineRecord): Promise<ModelMessage[]> {
+    const custom = await this.deps.hooks?.buildMessages?.(email, pipeline);
+    if (custom) return custom;
+    return [
+      { role: "system", content: pipeline.context },
+      {
+        role: "user",
+        content: `Subject: ${email.subject}\nFrom: ${email.from}\n\n${email.body}`,
+      },
+    ];
   }
 }
 

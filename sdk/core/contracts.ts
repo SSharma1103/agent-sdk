@@ -8,6 +8,7 @@ export type ModelMessage = {
   content: string;
   name?: string;
   toolCallId?: string;
+  toolCalls?: ToolCall[];
 };
 
 export type ToolCall = {
@@ -23,6 +24,8 @@ export type BrainGenerateInput = {
   model: string;
   messages: ModelMessage[];
   tools?: ToolDefinition[] | string[];
+  maxToolIterations?: number;
+  executeTools?: boolean;
   metadata?: Record<string, unknown>;
 };
 
