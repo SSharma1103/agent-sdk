@@ -1,0 +1,54 @@
+import type { EmailPipelineRecord, RunRecord, Storage, UsageRecord } from "./contracts.js";
+import { createId } from "../utils/id.js";
+
+export class MemoryStore implements Storage {
+  private readonly runs: RunRecord[] = [];
+  private readonly usage: UsageRecord[] = [];
+  private readonly emailPipelinesByUser = new Map<string, EmailPipelineRecord>();
+
+  async saveRun(data: Omit<RunRecord, "id" | "startedAt"> & Partial<Pick<RunRecord, "id" | "startedAt">>): Promise<void> {
+    this.runs.push({
+      ...data,
+      id: data.id ?? createId("run"),
+      startedAt: data.startedAt ?? new Date(),
+    });
+  }
+
+  async updateRun(id: string, data: Partial<RunRecord>): Promise<void> {
+    const idx = this.runs.findIndex((run) => run.id === id);
+    if (idx >= 0) this.runs[idx] = { ...this.runs[idx], ...data };
+  }
+
+  async getRuns(filter: { pipelineName?: string; limit?: number } = {}): Promise<RunRecord[]> {
+    const rows = filter.pipelineName
+      ? this.runs.filter((run) => run.pipelineName === filter.pipelineName)
+      : this.runs;
+    return rows.slice(-(filter.limit ?? rows.length)).reverse();
+  }
+
+  async saveUsage(record: UsageRecord): Promise<void> {
+    this.usage.push(record);
+  }
+
+  async getUsage(filter: { userId?: string; keyId?: string } = {}): Promise<UsageRecord[]> {
+    return this.usage.filter((row) => {
+      if (filter.userId && row.userId !== filter.userId) return false;
+      if (filter.keyId && row.keyId !== filter.keyId) return false;
+      return true;
+    });
+  }
+
+  async getEmailPipelineByUser(userId: string): Promise<EmailPipelineRecord | null> {
+    return this.emailPipelinesByUser.get(userId) ?? null;
+  }
+
+  async getEmailPipelineByWebhookToken(token: string): Promise<EmailPipelineRecord | null> {
+    return [...this.emailPipelinesByUser.values()].find((pipeline) => pipeline.webhookToken === token) ?? null;
+  }
+
+  async saveEmailPipeline(record: EmailPipelineRecord): Promise<EmailPipelineRecord> {
+    const saved = { ...record, updatedAt: new Date() };
+    this.emailPipelinesByUser.set(saved.userId, saved);
+    return saved;
+  }
+}
