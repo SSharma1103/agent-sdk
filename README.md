@@ -201,3 +201,4 @@ Plugin rules:
 - Tool connectors should use `ToolConnector` and expose schemas when available.
 - Storage migrations belong to adapters, not plugin business logic.
 - Marketplace validation should typecheck, run capability tests, and verify secret scopes.
+- https://automations.myui.in
