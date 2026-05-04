@@ -30,16 +30,77 @@ export class InternalEventTrigger<T = unknown> implements Trigger<T> {
 
 export class WebhookTrigger<T = unknown> implements Trigger<T> {
   readonly type = "webhook" as const;
+  private handler?: (event: TriggerEvent<T>) => Promise<void>;
+
   constructor(readonly name: string) {}
-  async start(_handler: (event: TriggerEvent<T>) => Promise<void>): Promise<void> {
-    // Framework adapters bind HTTP requests to this handler.
+
+  async start(handler: (event: TriggerEvent<T>) => Promise<void>): Promise<void> {
+    this.handler = handler;
+  }
+
+  async handle(request: { body?: T; headers?: Record<string, string> }): Promise<void> {
+    if (!this.handler) throw new Error(`[WebhookTrigger] trigger "${this.name}" has not started`);
+    await this.handler({
+      type: "webhook",
+      name: this.name,
+      payload: request.body as T,
+      headers: request.headers,
+    });
   }
 }
 
 export class CronTrigger<T = unknown> implements Trigger<T> {
   readonly type = "cron" as const;
-  constructor(readonly name: string, readonly schedule: string) {}
-  async start(_handler: (event: TriggerEvent<T>) => Promise<void>): Promise<void> {
-    // Runtime adapters provide cron scheduling.
+  private stopHandle?: () => Promise<void> | void;
+  private handler?: (event: TriggerEvent<T>) => Promise<void>;
+
+  constructor(
+    readonly name: string,
+    readonly schedule: string,
+    private readonly config: {
+      scheduler?: CronScheduler<T>;
+      intervalMs?: number;
+      payload?: T;
+    } = {},
+  ) {}
+
+  async start(handler: (event: TriggerEvent<T>) => Promise<void>): Promise<void> {
+    this.handler = handler;
+    if (this.config.scheduler) {
+      this.stopHandle = await this.config.scheduler.schedule(this.name, this.schedule, handler);
+      return;
+    }
+
+    if (this.config.intervalMs) {
+      const timer = setInterval(() => {
+        void this.fire(this.config.payload as T, handler);
+      }, this.config.intervalMs);
+      this.stopHandle = () => clearInterval(timer);
+    }
   }
+
+  async fire(payload?: T, handler?: (event: TriggerEvent<T>) => Promise<void>): Promise<void> {
+    const target = handler ?? this.handler;
+    if (!target) {
+      throw new Error(`[CronTrigger] trigger "${this.name}" has not started`);
+    }
+    await target({
+      type: "cron",
+      name: this.name,
+      payload: payload as T,
+    });
+  }
+
+  async stop(): Promise<void> {
+    await this.stopHandle?.();
+    this.stopHandle = undefined;
+  }
+}
+
+export interface CronScheduler<T = unknown> {
+  schedule(
+    name: string,
+    schedule: string,
+    handler: (event: TriggerEvent<T>) => Promise<void>,
+  ): Promise<(() => Promise<void> | void) | undefined> | (() => Promise<void> | void) | undefined;
 }

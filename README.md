@@ -176,6 +176,17 @@ Every module receives dependencies through constructors:
 
 This keeps the current behavior intact while making provider, persistence, transport, auth, and tools replaceable.
 
+## Runtime Adapters
+
+The SDK includes small default adapters while keeping runtime ownership in the host app:
+
+- `LocalModelProvider` targets OpenAI-compatible local servers such as Ollama or LM Studio at `http://localhost:11434/v1` by default.
+- `WebSocketTransport` accepts an existing socket or a URL plus a WebSocket constructor.
+- `StdioTransport` wraps an injected client with a `send(request)` method.
+- `OAuthProvider` delegates token verification to an injected verifier function or verifier object.
+- `WebhookTrigger` stores a handler and exposes `handle({ body, headers })` for framework routes.
+- `CronTrigger` supports injected schedulers, interval-based local scheduling, or manual `fire()` calls.
+
 ## Plugin System Guidelines
 
 Future marketplace plugins should export a manifest and a factory:

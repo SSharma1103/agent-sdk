@@ -2,6 +2,7 @@
   "name": "@myui/agent-sdk",
   "version": "0.1.0",
   "description": "Stack-agnostic AI orchestration SDK extracted from the automations architecture.",
+  "license": "MIT",
   "type": "module",
   "main": "dist/sdk/index.js",
   "types": "dist/sdk/index.d.ts",

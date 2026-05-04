@@ -12,6 +12,10 @@ export interface ApiKeyStore {
   findByToken(token: string): Promise<Principal | null>;
 }
 
+export type OAuthVerifier = {
+  verify(token: string, request?: { headers?: Record<string, string>; token?: string }): Promise<Principal | null>;
+} | ((token: string, request?: { headers?: Record<string, string>; token?: string }) => Promise<Principal | null>);
+
 export class ApiKeyAuthProvider implements AuthProvider {
   constructor(private readonly keys: ApiKeyStore) {}
 
@@ -22,7 +26,12 @@ export class ApiKeyAuthProvider implements AuthProvider {
 }
 
 export class OAuthProvider implements AuthProvider {
-  async authenticate(_request: { headers?: Record<string, string>; token?: string }): Promise<Principal | null> {
-    throw new Error("[OAuthProvider] provide an OAuth/OIDC verifier adapter");
+  constructor(private readonly verifier: OAuthVerifier) {}
+
+  async authenticate(request: { headers?: Record<string, string>; token?: string }): Promise<Principal | null> {
+    const token = request.token ?? request.headers?.authorization?.replace(/^Bearer\s+/i, "");
+    if (!token) return null;
+    if (typeof this.verifier === "function") return this.verifier(token, request);
+    return this.verifier.verify(token, request);
   }
 }

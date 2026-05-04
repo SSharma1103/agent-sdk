@@ -6,12 +6,18 @@ import {
   DeclarativePipeline,
   EmailPipeline,
   LocalToolConnector,
+  LocalModelProvider,
   MemoryStore,
+  OAuthProvider,
   Orchestrator,
+  StdioTransport,
   ToolRegistry,
   ToolExecutionError,
   ToolNotFoundError,
   ValidationError,
+  WebSocketTransport,
+  WebhookTrigger,
+  CronTrigger,
 } from "../dist/sdk/index.js";
 
 class EchoProvider {
@@ -281,4 +287,93 @@ test("tool registry throws a named ToolNotFoundError", async () => {
     tools.call("missing", {}),
     (error) => error instanceof ToolNotFoundError && error.code === "TOOL_NOT_FOUND",
   );
+});
+
+test("local model provider calls an OpenAI-compatible local endpoint", async () => {
+  const requests = [];
+  const provider = new LocalModelProvider({
+    baseUrl: "http://local.test/v1",
+    fetch: async (url, init) => {
+      requests.push({ url, body: JSON.parse(init.body) });
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: "local ok" } }],
+        usage: { prompt_tokens: 1, completion_tokens: 2, total_tokens: 3 },
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    },
+  });
+
+  const output = await provider.generate({
+    model: "llama",
+    messages: [{ role: "user", content: "hi" }],
+  });
+
+  assert.equal(output.text, "local ok");
+  assert.equal(output.usage.totalTokens, 3);
+  assert.equal(requests[0].url, "http://local.test/v1/chat/completions");
+  assert.equal(requests[0].body.model, "llama");
+});
+
+test("oauth provider delegates token verification", async () => {
+  const provider = new OAuthProvider(async (token) => token === "good"
+    ? { id: "user_1", scopes: ["read"] }
+    : null);
+
+  assert.deepEqual(await provider.authenticate({ token: "good" }), { id: "user_1", scopes: ["read"] });
+  assert.equal(await provider.authenticate({ headers: { authorization: "Bearer bad" } }), null);
+});
+
+test("websocket transport correlates request and response envelopes", async () => {
+  class FakeSocket {
+    listener;
+    sent = [];
+    send(data) {
+      this.sent.push(JSON.parse(data));
+      queueMicrotask(() => {
+        this.listener({ data: JSON.stringify({ id: this.sent[0].id, body: { ok: true } }) });
+      });
+    }
+    addEventListener(_type, listener) {
+      this.listener = listener;
+    }
+  }
+
+  const socket = new FakeSocket();
+  const transport = new WebSocketTransport({ socket, timeoutMs: 1000 });
+  const output = await transport.send({ route: "ping", body: { hello: "world" } });
+
+  assert.deepEqual(output, { ok: true });
+  assert.equal(socket.sent[0].route, "ping");
+});
+
+test("stdio transport delegates to an injected client", async () => {
+  const transport = new StdioTransport({
+    async send(request) {
+      return { route: request.route, echoed: request.body };
+    },
+  });
+
+  assert.deepEqual(await transport.send({ route: "tool", body: { id: 1 } }), {
+    route: "tool",
+    echoed: { id: 1 },
+  });
+});
+
+test("webhook and cron triggers can be invoked by host runtimes", async () => {
+  const events = [];
+  const webhook = new WebhookTrigger("incoming");
+  await webhook.start(async (event) => {
+    events.push(event);
+  });
+  await webhook.handle({ body: { id: 1 }, headers: { "x-test": "yes" } });
+
+  const cron = new CronTrigger("nightly", "0 0 * * *");
+  await cron.start(async (event) => {
+    events.push(event);
+  });
+  await cron.fire({ job: "sync" });
+
+  assert.equal(events[0].type, "webhook");
+  assert.deepEqual(events[0].payload, { id: 1 });
+  assert.equal(events[1].type, "cron");
+  assert.deepEqual(events[1].payload, { job: "sync" });
 });
