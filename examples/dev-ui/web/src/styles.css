@@ -1,0 +1,310 @@
+:root {
+  color: #1d2430;
+  background: #f4f6f8;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: 280px minmax(420px, 1fr) 380px;
+  min-height: 100vh;
+}
+
+.sidebar,
+.inspector {
+  background: #ffffff;
+  border-color: #dce2e8;
+  border-style: solid;
+}
+
+.sidebar {
+  border-width: 0 1px 0 0;
+  padding: 18px;
+}
+
+.inspector {
+  border-width: 0 0 0 1px;
+  padding: 14px;
+  overflow: auto;
+}
+
+.brand {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 22px;
+}
+
+.brand span,
+.eyebrow,
+small,
+time {
+  color: #667085;
+  font-size: 12px;
+}
+
+.brand strong {
+  font-size: 20px;
+}
+
+.sectionHeader {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin: 14px 0 8px;
+}
+
+h1,
+h2 {
+  margin: 0;
+}
+
+h1 {
+  font-size: 24px;
+}
+
+h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.targetList,
+.sessionList {
+  display: grid;
+  gap: 8px;
+}
+
+.targetList button,
+.sessionList button {
+  background: #f8fafc;
+  border: 1px solid #dce2e8;
+  border-radius: 8px;
+  color: inherit;
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px;
+  text-align: left;
+}
+
+.targetList button.selected,
+.sessionList button.selected {
+  background: #e7f0ff;
+  border-color: #7aa7f7;
+}
+
+.workspace {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  min-width: 0;
+}
+
+.topbar {
+  align-items: center;
+  background: #ffffff;
+  border-bottom: 1px solid #dce2e8;
+  display: flex;
+  justify-content: space-between;
+  padding: 18px 22px;
+}
+
+.status {
+  border-radius: 999px;
+  background: #ecfdf3;
+  color: #067647;
+  font-size: 13px;
+  padding: 6px 10px;
+}
+
+.status.running {
+  background: #fff7e6;
+  color: #9a6700;
+}
+
+.status.error,
+.error {
+  background: #fff1f0;
+  color: #b42318;
+}
+
+.error {
+  border-bottom: 1px solid #ffd2cc;
+  padding: 10px 22px;
+}
+
+.chat {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 0;
+}
+
+.messages {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  overflow: auto;
+  padding: 22px;
+}
+
+.message {
+  border: 1px solid #dce2e8;
+  border-radius: 8px;
+  max-width: 820px;
+  padding: 12px;
+}
+
+.message.user {
+  background: #ffffff;
+  justify-self: end;
+}
+
+.message.assistant {
+  background: #f8fafc;
+}
+
+.message header,
+.eventItem header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.message p {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+}
+
+.composer {
+  border-top: 1px solid #dce2e8;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr auto;
+  padding: 14px 22px;
+}
+
+.composer textarea,
+.stateEditor textarea {
+  border: 1px solid #c8d0d9;
+  border-radius: 8px;
+  min-height: 76px;
+  padding: 10px;
+  resize: vertical;
+}
+
+.composer button,
+.sectionHeader button,
+.stateEditor button {
+  background: #175cd3;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  padding: 9px 12px;
+}
+
+.composer button:disabled {
+  background: #98a2b3;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.tabs button {
+  background: #f8fafc;
+  border: 1px solid #dce2e8;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.tabs button.active {
+  background: #1d2430;
+  color: #ffffff;
+}
+
+.timeline,
+.runDetails {
+  display: grid;
+  gap: 10px;
+}
+
+.eventItem {
+  border: 1px solid #dce2e8;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+pre {
+  background: #101828;
+  border-radius: 8px;
+  color: #d1fadf;
+  font-size: 12px;
+  overflow: auto;
+  padding: 10px;
+}
+
+.stateEditor {
+  display: grid;
+  gap: 10px;
+}
+
+.stateEditor textarea {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  min-height: 420px;
+}
+
+.runDetails dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.runDetails dl div {
+  background: #f8fafc;
+  border: 1px solid #dce2e8;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.runDetails dt {
+  color: #667085;
+  font-size: 12px;
+}
+
+.runDetails dd {
+  margin: 4px 0 0;
+  word-break: break-all;
+}
+
+.empty {
+  align-self: center;
+  color: #667085;
+  justify-self: center;
+  padding: 32px;
+}
+
+@media (max-width: 980px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar,
+  .inspector {
+    border-width: 0 0 1px;
+  }
+}
