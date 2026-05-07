@@ -27,6 +27,7 @@ export type BrainGenerateInput = {
   maxToolIterations?: number;
   executeTools?: boolean;
   metadata?: Record<string, unknown>;
+  onToolCall?: (call: ToolCall) => Promise<void> | void;
 };
 
 export type BrainGenerateOutput = {

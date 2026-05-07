@@ -131,6 +131,7 @@ export class Brain {
 
       for (const call of result.toolCalls) {
         try {
+          await input.onToolCall?.(call);
           const output = await tools.call(call.name, call.input);
           messages.push({
             role: "tool",
