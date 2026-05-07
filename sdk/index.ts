@@ -8,6 +8,11 @@ export * from "./core/contracts.js";
 export * from "./core/providers/OpenAIProvider.js";
 export * from "./core/providers/PlaceholderProviders.js";
 
+export * from "./agents/contracts.js";
+export * from "./agents/Agent.js";
+export * from "./agents/AgentTeam.js";
+export * from "./agents/AgentPipeline.js";
+
 export * from "./pipelines/contracts.js";
 export * from "./pipelines/PipelineBase.js";
 export * from "./pipelines/ScrapePipeline.js";
@@ -25,5 +30,6 @@ export * from "./storage/contracts.js";
 export * from "./storage/MemoryStore.js";
 export * from "./storage/PrismaStore.js";
 export * from "./memory/contracts.js";
+export { InMemorySessionStore } from "./memory/contracts.js";
 export * from "./triggers/contracts.js";
 export * from "./auth/contracts.js";
