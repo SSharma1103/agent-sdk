@@ -1,6 +1,5 @@
 # Agent SDK
 
-Production-grade, stack-agnostic AI orchestration SDK extracted from `/root/projects/automations`.
 
 This is an extraction and generalization of the existing system, not a rewrite. The preserved foundation is:
 
