@@ -734,11 +734,25 @@ Placeholder adapter for Anthropic. Throws `NotImplementedError` — provide a cu
 ```ts
 export class LocalModelProvider implements LLMProvider {
   readonly name = "local";
-  async generate(_input: BrainGenerateInput): Promise<BrainGenerateOutput>;
+
+  constructor(config?: {
+    baseUrl?: string;
+    apiKey?: string;
+    defaultModel?: string;
+    fetch?: typeof fetch;
+  });
 }
 ```
 
-Placeholder adapter for local models (Ollama/LM Studio). Throws `NotImplementedError` — provide a custom implementation.
+OpenAI compatible provider for local models such as Ollama or LM Studio.
+
+By default, requests are sent to: `http://localhost:11434/v1/chat/completions`
+
+Supports:
+- OpenAI compatible local endpoints
+- Custom base URLs
+- Optional API key authentication
+- Tool/function calling support
 
 ---
 
