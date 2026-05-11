@@ -41,6 +41,10 @@ export class Brain {
     this.providers.set(provider.name, provider);
   }
 
+  get tools(): ToolRegistry | undefined {
+    return this.config.tools;
+  }
+
   async run(input: BrainGenerateInput): Promise<BrainGenerateOutput> {
     const { providerName, apiKey } = await this.resolveProviderAndKey(input);
     const provider = this.providers.get(providerName);

@@ -23,8 +23,14 @@ export * from "./pipelines/email/EmailPipeline.js";
 export * from "./pipelines/email/types.js";
 
 export * from "./orchestrator/Orchestrator.js";
+export * from "./mcp/McpServerConfig.js";
+export * from "./mcp/parseMcpCommand.js";
+export * from "./mcp/validateMcpCommand.js";
+export * from "./mcp/McpServerConnection.js";
+export * from "./mcp/McpToolLoader.js";
 export * from "./tools/contracts.js";
 export * from "./tools/connectors.js";
+export * from "./connectors/mcp/McpToolConnector.js";
 export * from "./transport/contracts.js";
 export * from "./transport/adapters.js";
 export * from "./storage/contracts.js";

@@ -1,6 +1,13 @@
 import type { Brain } from "../core/Brain.js";
 import type { ModelMessage, ToolCall } from "../core/contracts.js";
 import type { SessionMemory } from "../memory/contracts.js";
+import type {
+  McpCommandInput,
+  McpCommandValidationOptions,
+  McpConnectedServer,
+  McpServerConfig,
+  McpServerInfo,
+} from "../mcp/McpServerConfig.js";
 import type { PipelineContext } from "../pipelines/contracts.js";
 import type { ToolConnector, ToolRegistry } from "../tools/contracts.js";
 import type { Usage } from "../types.js";
@@ -21,6 +28,7 @@ export type AgentDeps = {
   brain: Brain;
   tools?: ToolRegistry;
   memory?: SessionMemory;
+  mcp?: McpCommandValidationOptions;
 };
 
 export type AgentRunInput = {
@@ -46,12 +54,15 @@ export type AgentToolInput = string | AgentRunInput;
 
 export type AgentTool = ToolConnector<AgentToolInput, AgentRunOutput>;
 
-export type AgentTeamMode =
-  | "manager"
-  | "sequential"
-  | "parallel"
-  | "handoff"
-  | "planner-executor";
+export type AgentAddMcpCommandInput = McpCommandInput;
+
+export type AgentAddMcpServerInput = McpServerConfig;
+
+export type AgentMcpServerInfo = McpServerInfo;
+
+export type AgentMcpConnectedServer = McpConnectedServer;
+
+export type AgentTeamMode = "manager" | "sequential" | "parallel" | "handoff" | "planner-executor";
 
 export type AgentTeamConfig = {
   name: string;
