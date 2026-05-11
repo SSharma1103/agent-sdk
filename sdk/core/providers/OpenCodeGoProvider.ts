@@ -8,26 +8,31 @@ import type {
 import type { ToolRegistry } from "../../tools/contracts.js";
 import { ProviderRequestError, ValidationError } from "../../errors.js";
 
-type OpenAIProviderConfig = {
+type OpenCodeGoProviderConfig = {
   apiKey?: string;
   baseUrl?: string;
   defaultModel?: string;
   fetch?: typeof fetch;
 };
 
-export class OpenAIProvider implements LLMProvider {
-  readonly name = "openai";
+export class OpenCodeGoProvider implements LLMProvider {
+  readonly name = "opencode-go";
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;
 
-  constructor(private readonly config: OpenAIProviderConfig = {}) {
-    this.baseUrl = config.baseUrl ?? "https://api.openai.com/v1";
+  constructor(private readonly config: OpenCodeGoProviderConfig = {}) {
+    // TODO(opencode-go): Confirm the official OpenCode Go endpoint and request body shape.
+    this.baseUrl = config.baseUrl ?? "https://api.opencodego.com/v1";
     this.fetchImpl = config.fetch ?? fetch;
   }
 
   async generate(input: BrainGenerateInput, tools?: ToolRegistry): Promise<BrainGenerateOutput> {
-    const apiKey = input.apiKey ?? this.config.apiKey;
-    if (!apiKey) throw new Error("[OpenAIProvider] apiKey is required");
+    const apiKey = input.apiKey ?? this.config.apiKey ?? getEnv("OPENCODE_GO_API_KEY");
+    if (!apiKey) {
+      throw new Error(
+        '[OpenCodeGoProvider] apiKey is required. Pass apiKey to Brain.run or set OPENCODE_GO_API_KEY.',
+      );
+    }
 
     const resolvedTools = tools?.resolveMany(input.tools);
     const response = await this.fetchImpl(`${this.baseUrl}/chat/completions`, {
@@ -37,8 +42,9 @@ export class OpenAIProvider implements LLMProvider {
         "content-type": "application/json",
       },
       body: JSON.stringify({
+        // TODO(opencode-go): Confirm model identifiers and whether this chat-completions-compatible payload is correct.
         model: input.model || this.config.defaultModel,
-        messages: input.messages.map(toOpenAIMessage),
+        messages: input.messages.map(toOpenCodeGoMessage),
         tools: resolvedTools?.map((tool) => ({
           type: "function",
           function: {
@@ -51,7 +57,7 @@ export class OpenAIProvider implements LLMProvider {
     });
 
     if (!response.ok) {
-      throw new ProviderRequestError("OpenAIProvider", response.status, await response.text());
+      throw new ProviderRequestError("OpenCodeGoProvider", response.status, await response.text());
     }
 
     const json = (await response.json()) as {
@@ -101,15 +107,7 @@ export class OpenAIProvider implements LLMProvider {
   }
 }
 
-function safeJson(value: string): unknown {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
-}
-
-function toOpenAIMessage(message: BrainGenerateInput["messages"][number]): Record<string, unknown> {
+function toOpenCodeGoMessage(message: BrainGenerateInput["messages"][number]): Record<string, unknown> {
   if (message.role === "assistant" && message.toolCalls?.length) {
     return {
       role: "assistant",
@@ -127,7 +125,7 @@ function toOpenAIMessage(message: BrainGenerateInput["messages"][number]): Recor
 
   if (message.role === "tool") {
     if (!message.toolCallId) {
-      throw new ValidationError("[OpenAIProvider] tool messages require toolCallId");
+      throw new ValidationError("[OpenCodeGoProvider] tool messages require toolCallId");
     }
     return {
       role: "tool",
@@ -142,4 +140,16 @@ function toOpenAIMessage(message: BrainGenerateInput["messages"][number]): Recor
     content: message.content,
     ...(message.name ? { name: message.name } : {}),
   };
+}
+
+function safeJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+
+function getEnv(name: string): string | undefined {
+  return typeof process !== "undefined" ? process.env[name] : undefined;
 }

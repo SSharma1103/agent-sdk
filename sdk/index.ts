@@ -6,6 +6,7 @@ export * from "./validation.js";
 export * from "./core/Brain.js";
 export * from "./core/contracts.js";
 export * from "./core/providers/OpenAIProvider.js";
+export * from "./core/providers/OpenCodeGoProvider.js";
 export * from "./core/providers/PlaceholderProviders.js";
 
 export * from "./agents/contracts.js";

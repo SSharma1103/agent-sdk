@@ -1,9 +1,15 @@
+import type { LLMKeyRecord, LLMProviderName } from "../core/contracts.js";
 import type { EmailPipelineRecord, RunRecord, Storage, UsageRecord, WorkflowRule } from "./contracts.js";
 
 type PrismaLike = {
   llmUsage?: {
     create(input: { data: Record<string, unknown> }): Promise<unknown>;
     findMany(input?: Record<string, unknown>): Promise<Array<{ totalTokens?: number } & Record<string, unknown>>>;
+  };
+  llmKey?: {
+    findFirst(input: Record<string, unknown>): Promise<Record<string, unknown> | null>;
+    create(input: { data: Record<string, unknown> }): Promise<Record<string, unknown>>;
+    update(input: { where: Record<string, unknown>; data: Record<string, unknown> }): Promise<Record<string, unknown>>;
   };
   emailPipeline?: {
     findUnique(input: Record<string, unknown>): Promise<Record<string, unknown> | null>;
@@ -20,7 +26,9 @@ type PrismaLike = {
 export class PrismaStore implements Storage {
   constructor(private readonly prisma: PrismaLike) {}
 
-  async saveRun(data: Omit<RunRecord, "id" | "startedAt"> & Partial<Pick<RunRecord, "id" | "startedAt">>): Promise<void> {
+  async saveRun(
+    data: Omit<RunRecord, "id" | "startedAt"> & Partial<Pick<RunRecord, "id" | "startedAt">>,
+  ): Promise<void> {
     if (!this.prisma.orchestrationRun) return;
     await this.prisma.orchestrationRun.create({ data: data as Record<string, unknown> });
   }
@@ -30,11 +38,13 @@ export class PrismaStore implements Storage {
   }
 
   async getRuns(filter: { pipelineName?: string; limit?: number } = {}): Promise<RunRecord[]> {
-    return this.prisma.orchestrationRun?.findMany({
-      where: filter.pipelineName ? { pipelineName: filter.pipelineName } : undefined,
-      take: filter.limit,
-      orderBy: { startedAt: "desc" },
-    }) ?? [];
+    return (
+      this.prisma.orchestrationRun?.findMany({
+        where: filter.pipelineName ? { pipelineName: filter.pipelineName } : undefined,
+        take: filter.limit,
+        orderBy: { startedAt: "desc" },
+      }) ?? []
+    );
   }
 
   async saveUsage(record: UsageRecord): Promise<void> {
@@ -52,8 +62,8 @@ export class PrismaStore implements Storage {
     });
   }
 
-  async getUsage(filter: { userId?: string; keyId?: string } = {}): Promise<UsageRecord[]> {
-    const rows = await this.prisma.llmUsage?.findMany({ where: filter }) ?? [];
+  async getUsage(filter: { userId?: string; keyId?: string; provider?: LLMProviderName } = {}): Promise<UsageRecord[]> {
+    const rows = (await this.prisma.llmUsage?.findMany({ where: filter })) ?? [];
     return rows.map((row) => ({
       userId: row.userId as string | undefined,
       keyId: row.keyId as string | undefined,
@@ -65,6 +75,26 @@ export class PrismaStore implements Storage {
         totalTokens: Number(row.totalTokens ?? 0),
       },
     }));
+  }
+
+  async getLLMKey(input: { userId: string; provider: LLMProviderName; keyId?: string }): Promise<LLMKeyRecord | null> {
+    const row = await this.prisma.llmKey?.findFirst({
+      where: {
+        userId: input.userId,
+        provider: input.provider,
+        ...(input.keyId ? { id: input.keyId } : {}),
+      },
+    });
+    return row ? rowToLLMKey(row) : null;
+  }
+
+  async saveLLMKey(record: LLMKeyRecord): Promise<LLMKeyRecord> {
+    if (!this.prisma.llmKey) return record;
+    const data = record as Record<string, unknown>;
+    const row = record.id
+      ? await this.prisma.llmKey.update({ where: { id: record.id }, data })
+      : await this.prisma.llmKey.create({ data });
+    return rowToLLMKey(row);
   }
 
   async getEmailPipelineByUser(userId: string): Promise<EmailPipelineRecord | null> {
@@ -86,6 +116,19 @@ export class PrismaStore implements Storage {
       : await this.prisma.emailPipeline.create({ data });
     return rowToEmailRecord(row);
   }
+}
+
+function rowToLLMKey(row: Record<string, unknown>): LLMKeyRecord {
+  return {
+    id: row.id ? String(row.id) : undefined,
+    userId: String(row.userId),
+    provider: String(row.provider ?? "openai"),
+    apiKey: String(row.apiKey ?? ""),
+    name: row.name ? String(row.name) : undefined,
+    createdAt: row.createdAt instanceof Date ? row.createdAt : undefined,
+    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : undefined,
+    metadata: row.metadata as Record<string, unknown> | undefined,
+  };
 }
 
 function rowToEmailRecord(row: Record<string, unknown>): EmailPipelineRecord {
