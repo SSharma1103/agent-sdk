@@ -1,16 +1,37 @@
-# Source and local development files
+# The published package is also constrained by package.json "files".
+# Keep this ignore file conservative for older npm tooling.
+
+# Source and examples
 sdk/
 examples/
-ARCHITECTURE.md
-tsconfig.json
+tests/
+docs/
+.github/
+.changeset/
 
-# Dependencies and caches
+# Development config
+tsconfig.json
+eslint.config.js
+.prettierrc.json
+.prettierignore
+ARCHITECTURE.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+SUPPORT.md
+ROADMAP.md
+CHANGELOG.md
+
+# Dependencies, caches, and build artifacts outside the SDK package
 node_modules/
+dist/examples/
+examples/dev-ui/web/dist/
 .npm/
 .pnpm-store/
 .yarn/
 .turbo/
 .cache/
+coverage/
 
 # Environment and local config
 .env
@@ -27,7 +48,6 @@ pnpm-debug.log*
 
 # Git/editor/tooling metadata
 .git/
-.github/
 .gitignore
 .claude/
 .codex/
@@ -38,10 +58,10 @@ Thumbs.db
 *.swp
 *.swo
 
-# Keep package artifacts
-!dist/
-!dist/**
-dist/examples/
+# Package artifacts
+!dist/sdk/
+!dist/sdk/**
 !README.md
+!LICENSE
+!API_REFERENCE.md
 !package.json
-!package-lock.json

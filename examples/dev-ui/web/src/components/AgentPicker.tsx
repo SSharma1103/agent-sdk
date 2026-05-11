@@ -23,7 +23,10 @@ export function AgentPicker({
             onClick={() => onSelect(target)}
           >
             <span>{target.name}</span>
-            <small>{target.type}{target.mode ? ` / ${target.mode}` : ""}</small>
+            <small>
+              {target.type}
+              {target.mode ? ` / ${target.mode}` : ""}
+            </small>
           </button>
         ))}
       </div>

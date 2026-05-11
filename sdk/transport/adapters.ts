@@ -15,18 +15,21 @@ export class HttpTransport implements Transport {
     return {
       status: response.status,
       headers: Object.fromEntries(response.headers.entries()),
-      body: await response.json() as T,
+      body: (await response.json()) as T,
     };
   }
 }
 
 export class WebSocketTransport implements Transport {
   private readonly socket: WebSocketLike;
-  private readonly pending = new Map<string, {
-    resolve: (value: unknown) => void;
-    reject: (error: unknown) => void;
-    timeout?: ReturnType<typeof setTimeout>;
-  }>();
+  private readonly pending = new Map<
+    string,
+    {
+      resolve: (value: unknown) => void;
+      reject: (error: unknown) => void;
+      timeout?: ReturnType<typeof setTimeout>;
+    }
+  >();
 
   constructor(private readonly config: WebSocketTransportConfig) {
     this.socket = config.socket ?? createWebSocket(config.url, config.WebSocket);
@@ -39,11 +42,13 @@ export class WebSocketTransport implements Transport {
     return new Promise<T>((resolve, reject) => {
       const timeout = setTimeout(() => {
         this.pending.delete(id);
-        reject(new AgentSDKError({
-          code: "TRANSPORT_TIMEOUT",
-          message: `[WebSocketTransport] request "${id}" timed out`,
-          details: { id, route: request.route },
-        }));
+        reject(
+          new AgentSDKError({
+            code: "TRANSPORT_TIMEOUT",
+            message: `[WebSocketTransport] request "${id}" timed out`,
+            details: { id, route: request.route },
+          }),
+        );
       }, this.config.timeoutMs ?? 30000);
 
       this.pending.set(id, { resolve: resolve as (value: unknown) => void, reject, timeout });
@@ -59,11 +64,13 @@ export class WebSocketTransport implements Transport {
     this.pending.delete(data.id);
     if (pending.timeout) clearTimeout(pending.timeout);
     if (data.error) {
-      pending.reject(new AgentSDKError({
-        code: "TRANSPORT_REQUEST_FAILED",
-        message: `[WebSocketTransport] request "${data.id}" failed`,
-        details: { id: data.id, error: data.error },
-      }));
+      pending.reject(
+        new AgentSDKError({
+          code: "TRANSPORT_REQUEST_FAILED",
+          message: `[WebSocketTransport] request "${data.id}" failed`,
+          details: { id: data.id, error: data.error },
+        }),
+      );
       return;
     }
     pending.resolve(data.body ?? data);
@@ -83,7 +90,10 @@ export interface QueueClient {
 }
 
 export class QueueTransport implements Transport {
-  constructor(private readonly queue: QueueClient, private readonly queueName = "agent-sdk") {}
+  constructor(
+    private readonly queue: QueueClient,
+    private readonly queueName = "agent-sdk",
+  ) {}
 
   async send<T = unknown>(request: TransportRequest): Promise<T> {
     return this.queue.enqueue(this.queueName, request) as Promise<T>;
@@ -129,9 +139,8 @@ function bindWebSocketMessage(socket: WebSocketLike, listener: (message: unknown
 }
 
 function parseMessage(message: unknown): unknown {
-  const data = typeof message === "object" && message && "data" in message
-    ? (message as { data: unknown }).data
-    : message;
+  const data =
+    typeof message === "object" && message && "data" in message ? (message as { data: unknown }).data : message;
   if (typeof data === "string") return JSON.parse(data);
   return data;
 }

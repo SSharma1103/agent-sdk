@@ -139,7 +139,10 @@ function parseSseFrame(
     onError(error: Error): void;
   },
 ): void {
-  const event = frame.split("\n").find((line) => line.startsWith("event: "))?.slice(7);
+  const event = frame
+    .split("\n")
+    .find((line) => line.startsWith("event: "))
+    ?.slice(7);
   const dataLine = frame.split("\n").find((line) => line.startsWith("data: "));
   if (!event || !dataLine) return;
   const data = JSON.parse(dataLine.slice(6));

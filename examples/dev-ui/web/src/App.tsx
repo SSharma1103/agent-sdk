@@ -46,7 +46,7 @@ function App() {
 
   async function bootstrap() {
     const [targetList, sessionList] = await Promise.all([listTargets(), listSessions()]);
-    const firstSession = sessionList[0] ?? await createSession("Local debug session");
+    const firstSession = sessionList[0] ?? (await createSession("Local debug session"));
     setTargets(targetList);
     setSessions(sessionList[0] ? sessionList : [firstSession]);
     setSelectedTarget(targetList[0] ?? null);
@@ -74,26 +74,29 @@ function App() {
     setError(null);
     setEvents([]);
 
-    await runTargetStreaming({
-      targetType: selectedTarget.type,
-      targetName: selectedTarget.name,
-      sessionId: selectedSession.id,
-      input,
-    }, {
-      onEvent(event) {
-        setEvents((items) => [...items, event]);
+    await runTargetStreaming(
+      {
+        targetType: selectedTarget.type,
+        targetName: selectedTarget.name,
+        sessionId: selectedSession.id,
+        input,
       },
-      onDone(result) {
-        setLastRun(result);
-        setEvents(result.events);
-        setStatus("idle");
-        refreshSession(selectedSession.id).catch(() => undefined);
+      {
+        onEvent(event) {
+          setEvents((items) => [...items, event]);
+        },
+        onDone(result) {
+          setLastRun(result);
+          setEvents(result.events);
+          setStatus("idle");
+          refreshSession(selectedSession.id).catch(() => undefined);
+        },
+        onError(runError) {
+          setError(runError.message);
+          setStatus("error");
+        },
       },
-      onError(runError) {
-        setError(runError.message);
-        setStatus("error");
-      },
-    });
+    );
   }
 
   async function handleStateSave(event: FormEvent<HTMLFormElement>) {
@@ -113,15 +116,13 @@ function App() {
           <span>Agent SDK</span>
           <strong>Dev UI</strong>
         </div>
-        <AgentPicker
-          targets={targets}
-          selected={selectedTarget}
-          onSelect={setSelectedTarget}
-        />
+        <AgentPicker targets={targets} selected={selectedTarget} onSelect={setSelectedTarget} />
         <section className="sessions">
           <div className="sectionHeader">
             <h2>Sessions</h2>
-            <button type="button" onClick={handleNewSession}>New</button>
+            <button type="button" onClick={handleNewSession}>
+              New
+            </button>
           </div>
           <div className="sessionList">
             {sessions.map((session) => (
@@ -161,9 +162,15 @@ function App() {
 
       <aside className="inspector">
         <div className="tabs">
-          <button className={tab === "events" ? "active" : ""} onClick={() => setTab("events")}>Events</button>
-          <button className={tab === "state" ? "active" : ""} onClick={() => setTab("state")}>State</button>
-          <button className={tab === "run" ? "active" : ""} onClick={() => setTab("run")}>Run</button>
+          <button className={tab === "events" ? "active" : ""} onClick={() => setTab("events")}>
+            Events
+          </button>
+          <button className={tab === "state" ? "active" : ""} onClick={() => setTab("state")}>
+            State
+          </button>
+          <button className={tab === "run" ? "active" : ""} onClick={() => setTab("run")}>
+            Run
+          </button>
         </div>
         {tab === "events" ? <EventTimeline events={events} /> : null}
         {tab === "state" && selectedSession ? (

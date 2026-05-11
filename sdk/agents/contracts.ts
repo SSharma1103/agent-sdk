@@ -62,7 +62,7 @@ export type AgentMcpServerInfo = McpServerInfo;
 
 export type AgentMcpConnectedServer = McpConnectedServer;
 
-export type AgentTeamMode = "manager" | "sequential" | "parallel" | "handoff" | "planner-executor";
+export type AgentTeamMode = "manager" | "sequential" | "parallel" | "handoff" | "planner-executor" | "router";
 
 export type AgentTeamConfig = {
   name: string;
@@ -72,6 +72,8 @@ export type AgentTeamConfig = {
   brain: Brain;
   tools?: ToolRegistry;
   memory?: SessionMemory;
+  maxSteps?: number;
+  maxCallsPerAgent?: number;
   metadata?: Record<string, unknown>;
 };
 

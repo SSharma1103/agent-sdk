@@ -81,13 +81,17 @@ test("orchestrator runs global, pipeline, and call hooks while preserving plain 
     },
   });
 
-  const output = await sdk.runPipeline("hello", { name: "Ada" }, {
-    metadata: { requestId: "req_1" },
-    hooks: {
-      beforeRun: () => events.push("call:before"),
-      afterRun: () => events.push("call:after"),
+  const output = await sdk.runPipeline(
+    "hello",
+    { name: "Ada" },
+    {
+      metadata: { requestId: "req_1" },
+      hooks: {
+        beforeRun: () => events.push("call:before"),
+        afterRun: () => events.push("call:after"),
+      },
     },
-  });
+  );
 
   assert.equal(output, "hi Ada");
   assert.deepEqual(events, [
@@ -127,11 +131,13 @@ test("declarative pipelines support mapping, conditions, retries, nested pipelin
   let flakyCalls = 0;
 
   tools.register(new LocalToolConnector("double", (input) => input.value * 2));
-  tools.register(new LocalToolConnector("flaky", () => {
-    flakyCalls += 1;
-    if (flakyCalls === 1) throw new Error("try again");
-    return "ok";
-  }));
+  tools.register(
+    new LocalToolConnector("flaky", () => {
+      flakyCalls += 1;
+      if (flakyCalls === 1) throw new Error("try again");
+      return "ok";
+    }),
+  );
 
   const brain = new Brain({ providers: [provider] });
   const orchestrator = new Orchestrator();
@@ -142,46 +148,52 @@ test("declarative pipelines support mapping, conditions, retries, nested pipelin
     },
   });
 
-  const pipeline = new DeclarativePipeline({
-    name: "custom",
-    steps: [
-      {
-        id: "double",
-        type: "tool",
-        name: "double",
-        mapInput: (state) => ({ value: state.input.count }),
-      },
-      {
-        id: "skip",
-        type: "tool",
-        name: "double",
-        when: () => false,
-      },
-      {
-        id: "flaky",
-        type: "tool",
-        name: "flaky",
-        retry: 1,
-        mapOutput: (_output, state) => state.steps.double,
-      },
-      {
-        id: "llm",
-        type: "llm",
-        model: "echo-model",
-        prompt: (state) => `count ${state.current}`,
-      },
-      {
-        id: "nested",
-        type: "pipeline",
-        name: "wrap",
-        mapInput: (state) => state.steps.llm.text,
-      },
-    ],
-  }, { brain, tools, orchestrator });
+  const pipeline = new DeclarativePipeline(
+    {
+      name: "custom",
+      steps: [
+        {
+          id: "double",
+          type: "tool",
+          name: "double",
+          mapInput: (state) => ({ value: state.input.count }),
+        },
+        {
+          id: "skip",
+          type: "tool",
+          name: "double",
+          when: () => false,
+        },
+        {
+          id: "flaky",
+          type: "tool",
+          name: "flaky",
+          retry: 1,
+          mapOutput: (_output, state) => state.steps.double,
+        },
+        {
+          id: "llm",
+          type: "llm",
+          model: "echo-model",
+          prompt: (state) => `count ${state.current}`,
+        },
+        {
+          id: "nested",
+          type: "pipeline",
+          name: "wrap",
+          mapInput: (state) => state.steps.llm.text,
+        },
+      ],
+    },
+    { brain, tools, orchestrator },
+  );
 
-  const output = await pipeline.run({ count: 3 }, {
-    emit: (event) => events.push(event.type),
-  });
+  const output = await pipeline.run(
+    { count: 3 },
+    {
+      emit: (event) => events.push(event.type),
+    },
+  );
 
   assert.deepEqual(output, { wrapped: "count 6" });
   assert.equal(flakyCalls, 2);
@@ -248,9 +260,11 @@ test("brain executes tool calls until the provider returns final text", async ()
 test("brain wraps tool failures in ToolExecutionError", async () => {
   const provider = new ToolCallingProvider();
   const tools = new ToolRegistry();
-  tools.register(new LocalToolConnector("lookup", async () => {
-    throw new Error("database unavailable");
-  }));
+  tools.register(
+    new LocalToolConnector("lookup", async () => {
+      throw new Error("database unavailable");
+    }),
+  );
   const brain = new Brain({ providers: [provider], tools });
 
   await assert.rejects(
@@ -298,10 +312,13 @@ test("local model provider calls an OpenAI-compatible local endpoint", async () 
     baseUrl: "http://local.test/v1",
     fetch: async (url, init) => {
       requests.push({ url, body: JSON.parse(init.body) });
-      return new Response(JSON.stringify({
-        choices: [{ message: { content: "local ok" } }],
-        usage: { prompt_tokens: 1, completion_tokens: 2, total_tokens: 3 },
-      }), { status: 200, headers: { "content-type": "application/json" } });
+      return new Response(
+        JSON.stringify({
+          choices: [{ message: { content: "local ok" } }],
+          usage: { prompt_tokens: 1, completion_tokens: 2, total_tokens: 3 },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
     },
   });
 
@@ -317,9 +334,7 @@ test("local model provider calls an OpenAI-compatible local endpoint", async () 
 });
 
 test("oauth provider delegates token verification", async () => {
-  const provider = new OAuthProvider(async (token) => token === "good"
-    ? { id: "user_1", scopes: ["read"] }
-    : null);
+  const provider = new OAuthProvider(async (token) => (token === "good" ? { id: "user_1", scopes: ["read"] } : null));
 
   assert.deepEqual(await provider.authenticate({ token: "good" }), { id: "user_1", scopes: ["read"] });
   assert.equal(await provider.authenticate({ headers: { authorization: "Bearer bad" } }), null);
@@ -385,16 +400,22 @@ test("agents build instruction and memory messages, persist sessions, and emit l
   const provider = new EchoProvider();
   const memory = new InMemorySessionStore();
   const brain = new Brain({ providers: [provider] });
-  const agent = new Agent({
-    name: "researcher",
-    instructions: "Be concise.",
-    model: "echo-model",
-  }, { brain, memory });
+  const agent = new Agent(
+    {
+      name: "researcher",
+      instructions: "Be concise.",
+      model: "echo-model",
+    },
+    { brain, memory },
+  );
   const events = [];
 
-  const first = await agent.run({ input: "first", sessionId: "session_1" }, {
-    emit: (event) => events.push(event.type),
-  });
+  const first = await agent.run(
+    { input: "first", sessionId: "session_1" },
+    {
+      emit: (event) => events.push(event.type),
+    },
+  );
   const second = await agent.run({ input: "second", sessionId: "session_1" });
 
   assert.equal(first.agentName, "researcher");
@@ -438,17 +459,23 @@ test("sdk registers agents and teams as pipelines, with specialist agents usable
   const provider = new ManagerProvider();
   const tools = new ToolRegistry();
   const brain = new Brain({ providers: [provider], tools });
-  const researcher = new Agent({
-    name: "researcher",
-    instructions: "Research.",
-    model: "research-model",
-  }, { brain });
-  const manager = new Agent({
-    name: "manager",
-    instructions: "Delegate.",
-    model: "manager-model",
-    tools: ["researcher"],
-  }, { brain });
+  const researcher = new Agent(
+    {
+      name: "researcher",
+      instructions: "Research.",
+      model: "research-model",
+    },
+    { brain },
+  );
+  const manager = new Agent(
+    {
+      name: "manager",
+      instructions: "Delegate.",
+      model: "manager-model",
+      tools: ["researcher"],
+    },
+    { brain },
+  );
   const team = new AgentTeam({
     name: "software-team",
     mode: "manager",
@@ -464,9 +491,13 @@ test("sdk registers agents and teams as pipelines, with specialist agents usable
   sdk.registerTeam(team);
 
   const agentOutput = await sdk.runAgent("researcher", "direct");
-  const teamOutput = await sdk.runTeam("software-team", { input: "Build X" }, {
-    emit: (event) => events.push(event.type),
-  });
+  const teamOutput = await sdk.runTeam(
+    "software-team",
+    { input: "Build X" },
+    {
+      emit: (event) => events.push(event.type),
+    },
+  );
 
   assert.equal(agentOutput.text, "researched:direct");
   assert.equal(teamOutput.teamName, "software-team");
@@ -516,4 +547,75 @@ test("agent teams support sequential and parallel modes", async () => {
   assert.equal(parallelOutput.results.length, 3);
   assert.equal(parallelOutput.usage.totalTokens, 6);
   assert.ok(parallelOutput.text.startsWith("manager-model:Synthesize these agent results"));
+});
+
+test("agent teams support router mode with bounded manager decisions", async () => {
+  class RouterProvider {
+    name = "router";
+    decisions = [
+      { action: "call_agent", agent: "scraper", input: "Collect launch facts", reason: "Need raw facts" },
+      { action: "call_agent", agent: "judge", input: "Review scraper findings", reason: "Need critique" },
+      { action: "finish", answer: "final launch plan", reason: "Enough evidence" },
+    ];
+    objectPrompts = [];
+
+    async generate(input) {
+      return {
+        text: `${input.model}:${input.messages.at(-1).content}`,
+        usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+      };
+    }
+
+    async generateObject(input) {
+      this.objectPrompts.push(input.prompt);
+      return {
+        object: this.decisions.shift(),
+        usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+      };
+    }
+  }
+
+  const provider = new RouterProvider();
+  const brain = new Brain({ providers: [provider] });
+  const scraper = new Agent({
+    name: "scraper",
+    description: "Collects facts.",
+    instructions: "Scrape.",
+    model: "scraper-model",
+  }, { brain });
+  const judge = new Agent({
+    name: "judge",
+    description: "Reviews facts.",
+    instructions: "Judge.",
+    model: "judge-model",
+  }, { brain });
+  const manager = new Agent({
+    name: "manager",
+    instructions: "Route.",
+    model: "manager-model",
+  }, { brain });
+  const team = new AgentTeam({
+    name: "router-team",
+    mode: "router",
+    manager,
+    agents: [scraper, judge],
+    brain,
+    maxSteps: 5,
+    maxCallsPerAgent: 2,
+  });
+  const events = [];
+
+  const output = await team.run("Plan launch", { emit: (event) => events.push(event.type) });
+
+  assert.equal(output.mode, "router");
+  assert.equal(output.text, "final launch plan");
+  assert.deepEqual(output.results.map((result) => result.agentName), ["scraper", "judge"]);
+  assert.equal(output.usage.totalTokens, 4);
+  assert.ok(output.raw.state.messages.some((message) => message.channel === "findings"));
+  assert.ok(provider.objectPrompts[1].includes("scraper: scraper-model:Collect launch facts"));
+  assert.ok(events.includes("agent_team.router.started"));
+  assert.ok(events.includes("agent_team.router.decision"));
+  assert.ok(events.includes("agent_team.agent_call.started"));
+  assert.ok(events.includes("agent_team.agent_call.completed"));
+  assert.ok(events.includes("agent_team.router.finished"));
 });

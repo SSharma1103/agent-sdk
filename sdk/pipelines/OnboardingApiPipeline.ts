@@ -3,7 +3,12 @@ import type { SessionMemory } from "../memory/contracts.js";
 import type { Pipeline } from "./contracts.js";
 
 export type OnboardingApiInput =
-  | { operation: "createSession"; pipelineId: string; fields: Array<{ id: string; question: string }>; context?: string }
+  | {
+      operation: "createSession";
+      pipelineId: string;
+      fields: Array<{ id: string; question: string }>;
+      context?: string;
+    }
   | { operation: "answer"; sessionId: string; fieldId: string; value: unknown };
 
 export class OnboardingApiPipeline implements Pipeline<OnboardingApiInput, unknown> {

@@ -23,15 +23,19 @@ export function ChatPanel({
   return (
     <div className="chat">
       <div className="messages">
-        {messages.length ? messages.map((message) => (
-          <article key={message.id} className={`message ${message.role}`}>
-            <header>
-              <span>{message.role}</span>
-              <time>{new Date(message.timestamp).toLocaleTimeString()}</time>
-            </header>
-            <p>{message.content}</p>
-          </article>
-        )) : <div className="empty">Start a run to inspect messages and events.</div>}
+        {messages.length ? (
+          messages.map((message) => (
+            <article key={message.id} className={`message ${message.role}`}>
+              <header>
+                <span>{message.role}</span>
+                <time>{new Date(message.timestamp).toLocaleTimeString()}</time>
+              </header>
+              <p>{message.content}</p>
+            </article>
+          ))
+        ) : (
+          <div className="empty">Start a run to inspect messages and events.</div>
+        )}
       </div>
       <form className="composer" onSubmit={submit}>
         <textarea
@@ -40,7 +44,9 @@ export function ChatPanel({
           disabled={disabled}
           placeholder="Send a task to the selected agent or team"
         />
-        <button type="submit" disabled={disabled || !input.trim()}>Run</button>
+        <button type="submit" disabled={disabled || !input.trim()}>
+          Run
+        </button>
       </form>
     </div>
   );

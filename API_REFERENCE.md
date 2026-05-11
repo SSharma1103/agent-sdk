@@ -47,11 +47,11 @@ export type Usage = {
 
 Tracks token usage for LLM API calls.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `promptTokens` | `number` | Tokens consumed by the prompt |
+| Property           | Type     | Description                      |
+| ------------------ | -------- | -------------------------------- |
+| `promptTokens`     | `number` | Tokens consumed by the prompt    |
 | `completionTokens` | `number` | Tokens generated in the response |
-| `totalTokens` | `number` | Total tokens used |
+| `totalTokens`      | `number` | Total tokens used                |
 
 ---
 
@@ -108,9 +108,9 @@ export function createId(prefix = "id"): string;
 
 Generates a unique identifier with an optional prefix.
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `prefix` | `string` | `"id"` | Prefix for the generated ID |
+| Parameter | Type     | Default | Description                 |
+| --------- | -------- | ------- | --------------------------- |
+| `prefix`  | `string` | `"id"`  | Prefix for the generated ID |
 
 **Returns:** `string` — Unique ID in the format `{prefix}_{random}`
 
@@ -132,11 +132,11 @@ export class AgentSDKError extends Error {
 
 Base error class for all SDK errors.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `code` | `string` | Machine-readable error code |
-| `details` | `Record<string, unknown>` | Additional error context |
-| `cause` | `unknown` | Original cause (if provided) |
+| Property  | Type                      | Description                  |
+| --------- | ------------------------- | ---------------------------- |
+| `code`    | `string`                  | Machine-readable error code  |
+| `details` | `Record<string, unknown>` | Additional error context     |
+| `cause`   | `unknown`                 | Original cause (if provided) |
 
 ---
 
@@ -189,8 +189,8 @@ export class ProviderNotFoundError extends AgentSDKError {
 
 Thrown when a requested LLM provider is not registered. Code: `"PROVIDER_NOT_FOUND"`.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
+| Parameter  | Type     | Description                  |
+| ---------- | -------- | ---------------------------- |
 | `provider` | `string` | Name of the missing provider |
 
 ---
@@ -205,9 +205,9 @@ export class ProviderCapabilityError extends AgentSDKError {
 
 Thrown when a provider does not support a requested capability (e.g., object generation). Code: `"PROVIDER_CAPABILITY_UNSUPPORTED"`.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `provider` | `string` | Provider name |
+| Parameter    | Type     | Description                    |
+| ------------ | -------- | ------------------------------ |
+| `provider`   | `string` | Provider name                  |
 | `capability` | `string` | Capability that is unsupported |
 
 ---
@@ -222,11 +222,11 @@ export class ProviderRequestError extends AgentSDKError {
 
 Thrown when an LLM provider API request fails. Code: `"PROVIDER_REQUEST_FAILED"`.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `provider` | `string` | Provider name |
-| `status` | `number` | HTTP status code |
-| `body` | `string` | Response body |
+| Parameter  | Type     | Description      |
+| ---------- | -------- | ---------------- |
+| `provider` | `string` | Provider name    |
+| `status`   | `number` | HTTP status code |
+| `body`     | `string` | Response body    |
 
 ---
 
@@ -240,8 +240,8 @@ export class PipelineNotFoundError extends AgentSDKError {
 
 Thrown when a requested pipeline is not registered. Code: `"PIPELINE_NOT_FOUND"`.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
+| Parameter      | Type     | Description                  |
+| -------------- | -------- | ---------------------------- |
 | `pipelineName` | `string` | Name of the missing pipeline |
 
 ---
@@ -256,8 +256,8 @@ export class ToolNotFoundError extends AgentSDKError {
 
 Thrown when a requested tool is not registered. Code: `"TOOL_NOT_FOUND"`.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
+| Parameter  | Type     | Description              |
+| ---------- | -------- | ------------------------ |
 | `toolName` | `string` | Name of the missing tool |
 
 ---
@@ -272,10 +272,10 @@ export class ToolExecutionError extends AgentSDKError {
 
 Thrown when a tool execution fails. Code: `"TOOL_EXECUTION_FAILED"`.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `toolName` | `string` | Name of the tool that failed |
-| `cause` | `unknown` | Original error |
+| Parameter  | Type      | Description                  |
+| ---------- | --------- | ---------------------------- |
+| `toolName` | `string`  | Name of the tool that failed |
+| `cause`    | `unknown` | Original error               |
 
 ---
 
@@ -327,20 +327,16 @@ Function type that validates unknown input and returns a typed value.
 ### `validateWithSchema(schema, input, label?)`
 
 ```ts
-export function validateWithSchema<T>(
-  schema: ValidationSchema<T>,
-  input: unknown,
-  label = "input"
-): T;
+export function validateWithSchema<T>(schema: ValidationSchema<T>, input: unknown, label = "input"): T;
 ```
 
 Validates input against a schema. Prefers `safeParse`, falls back to `parse`.
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `schema` | `ValidationSchema<T>` | — | Validation schema |
-| `input` | `unknown` | — | Value to validate |
-| `label` | `string` | `"input"` | Label for error messages |
+| Parameter | Type                  | Default   | Description              |
+| --------- | --------------------- | --------- | ------------------------ |
+| `schema`  | `ValidationSchema<T>` | —         | Validation schema        |
+| `input`   | `unknown`             | —         | Value to validate        |
+| `label`   | `string`              | `"input"` | Label for error messages |
 
 **Returns:** `T` — Validated and typed input
 
@@ -351,18 +347,15 @@ Validates input against a schema. Prefers `safeParse`, falls back to `parse`.
 ### `createValidator(schema, label?)`
 
 ```ts
-export function createValidator<T>(
-  schema: ValidationSchema<T>,
-  label?: string
-): Validator<T>;
+export function createValidator<T>(schema: ValidationSchema<T>, label?: string): Validator<T>;
 ```
 
 Creates a reusable validator function from a schema.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `schema` | `ValidationSchema<T>` | Validation schema |
-| `label` | `string` | Label for error messages |
+| Parameter | Type                  | Description              |
+| --------- | --------------------- | ------------------------ |
+| `schema`  | `ValidationSchema<T>` | Validation schema        |
+| `label`   | `string`              | Label for error messages |
 
 **Returns:** `Validator<T>` — Curried validator function
 
@@ -371,18 +364,15 @@ Creates a reusable validator function from a schema.
 ### `assertObject(input, label?)`
 
 ```ts
-export function assertObject(
-  input: unknown,
-  label = "input"
-): asserts input is Record<string, unknown>;
+export function assertObject(input: unknown, label = "input"): asserts input is Record<string, unknown>;
 ```
 
 Asserts that input is a plain object (not null or array).
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `input` | `unknown` | — | Value to check |
-| `label` | `string` | `"input"` | Label for error messages |
+| Parameter | Type      | Default   | Description              |
+| --------- | --------- | --------- | ------------------------ |
+| `input`   | `unknown` | —         | Value to check           |
+| `label`   | `string`  | `"input"` | Label for error messages |
 
 **Throws:** `ValidationError` if input is not an object
 
@@ -391,18 +381,15 @@ Asserts that input is a plain object (not null or array).
 ### `assertString(value, label)`
 
 ```ts
-export function assertString(
-  value: unknown,
-  label: string
-): asserts value is string;
+export function assertString(value: unknown, label: string): asserts value is string;
 ```
 
 Asserts that value is a non-empty string.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `value` | `unknown` | Value to check |
-| `label` | `string` | Label for error messages |
+| Parameter | Type      | Description              |
+| --------- | --------- | ------------------------ |
+| `value`   | `unknown` | Value to check           |
+| `label`   | `string`  | Label for error messages |
 
 **Throws:** `ValidationError` if value is not a non-empty string
 
@@ -434,13 +421,13 @@ export type ModelMessage = {
 
 A single message in a chat conversation.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `role` | `ChatRole` | Message role |
-| `content` | `string` | Message content |
-| `name` | `string` | Optional name (for tool messages) |
-| `toolCallId` | `string` | ID of the tool call this message responds to |
-| `toolCalls` | `ToolCall[]` | Tool calls made by the assistant |
+| Property     | Type         | Description                                  |
+| ------------ | ------------ | -------------------------------------------- |
+| `role`       | `ChatRole`   | Message role                                 |
+| `content`    | `string`     | Message content                              |
+| `name`       | `string`     | Optional name (for tool messages)            |
+| `toolCallId` | `string`     | ID of the tool call this message responds to |
+| `toolCalls`  | `ToolCall[]` | Tool calls made by the assistant             |
 
 ---
 
@@ -456,11 +443,11 @@ export type ToolCall = {
 
 Represents a tool call requested by an LLM.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `id` | `string` | Unique call ID |
-| `name` | `string` | Tool name |
-| `input` | `unknown` | Tool input arguments |
+| Property | Type      | Description          |
+| -------- | --------- | -------------------- |
+| `id`     | `string`  | Unique call ID       |
+| `name`   | `string`  | Tool name            |
+| `input`  | `unknown` | Tool input arguments |
 
 ---
 
@@ -482,17 +469,17 @@ export type BrainGenerateInput = {
 
 Input for text generation via the Brain.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `userId` | `string` | Optional user identifier |
-| `keyId` | `string` | Optional API key identifier |
-| `provider` | `string` | Target LLM provider name |
-| `model` | `string` | Target model name |
-| `messages` | `ModelMessage[]` | Chat message history |
-| `tools` | `ToolDefinition[] \| string[]` | Tools to make available |
-| `maxToolIterations` | `number` | Max tool call rounds (default: 4) |
-| `executeTools` | `boolean` | Whether to execute tool calls |
-| `metadata` | `Record<string, unknown>` | Arbitrary metadata |
+| Property            | Type                           | Description                       |
+| ------------------- | ------------------------------ | --------------------------------- |
+| `userId`            | `string`                       | Optional user identifier          |
+| `keyId`             | `string`                       | Optional API key identifier       |
+| `provider`          | `string`                       | Target LLM provider name          |
+| `model`             | `string`                       | Target model name                 |
+| `messages`          | `ModelMessage[]`               | Chat message history              |
+| `tools`             | `ToolDefinition[] \| string[]` | Tools to make available           |
+| `maxToolIterations` | `number`                       | Max tool call rounds (default: 4) |
+| `executeTools`      | `boolean`                      | Whether to execute tool calls     |
+| `metadata`          | `Record<string, unknown>`      | Arbitrary metadata                |
 
 ---
 
@@ -509,12 +496,12 @@ export type BrainGenerateOutput = {
 
 Output from text generation.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `text` | `string` | Generated text |
+| Property    | Type         | Description                       |
+| ----------- | ------------ | --------------------------------- |
+| `text`      | `string`     | Generated text                    |
 | `toolCalls` | `ToolCall[]` | Tool calls requested by the model |
-| `usage` | `Usage` | Token usage statistics |
-| `raw` | `unknown` | Raw provider response |
+| `usage`     | `Usage`      | Token usage statistics            |
+| `raw`       | `unknown`    | Raw provider response             |
 
 ---
 
@@ -530,11 +517,11 @@ export type BrainObjectInput<TSchema = unknown> = Omit<BrainGenerateInput, "mess
 
 Input for structured object generation.
 
-| Property | Type | Description |
-|----------|------|-------------|
+| Property | Type      | Description                |
+| -------- | --------- | -------------------------- |
 | `schema` | `TSchema` | Schema to validate against |
-| `prompt` | `string` | User prompt |
-| `system` | `string` | System instructions |
+| `prompt` | `string`  | User prompt                |
+| `system` | `string`  | System instructions        |
 
 ---
 
@@ -550,11 +537,11 @@ export type BrainObjectOutput<T> = {
 
 Output from structured object generation.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `object` | `T` | Parsed structured object |
-| `usage` | `Usage` | Token usage statistics |
-| `raw` | `unknown` | Raw provider response |
+| Property | Type      | Description              |
+| -------- | --------- | ------------------------ |
+| `object` | `T`       | Parsed structured object |
+| `usage`  | `Usage`   | Token usage statistics   |
+| `raw`    | `unknown` | Raw provider response    |
 
 ---
 
@@ -570,10 +557,10 @@ export interface LLMProvider {
 
 Interface for LLM provider adapters.
 
-| Property / Method | Type | Description |
-|-------------------|------|-------------|
-| `name` | `string` | Provider name |
-| `generate` | `(input, tools?) => Promise<BrainGenerateOutput>` | Generate text completion |
+| Property / Method | Type                                               | Description                           |
+| ----------------- | -------------------------------------------------- | ------------------------------------- |
+| `name`            | `string`                                           | Provider name                         |
+| `generate`        | `(input, tools?) => Promise<BrainGenerateOutput>`  | Generate text completion              |
 | `generateObject?` | `(input, tools?) => Promise<BrainObjectOutput<T>>` | Generate structured object (optional) |
 
 ---
@@ -610,16 +597,16 @@ export type BrainConfig = {
 
 Configuration for the Brain.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `providers` | `LLMProvider[]` | Registered LLM providers |
-| `defaultProvider` | `string` | Default provider name |
-| `storage` | `Storage` | Storage for usage tracking |
-| `tools` | `ToolRegistry` | Available tools |
-| `keyResolver` | `ApiKeyResolver` | API key resolver |
-| `logger` | `Logger` | Logger instance |
-| `maxToolIterations` | `number` | Max tool call rounds |
-| `executeTools` | `boolean` | Whether to execute tools by default |
+| Property            | Type             | Description                         |
+| ------------------- | ---------------- | ----------------------------------- |
+| `providers`         | `LLMProvider[]`  | Registered LLM providers            |
+| `defaultProvider`   | `string`         | Default provider name               |
+| `storage`           | `Storage`        | Storage for usage tracking          |
+| `tools`             | `ToolRegistry`   | Available tools                     |
+| `keyResolver`       | `ApiKeyResolver` | API key resolver                    |
+| `logger`            | `Logger`         | Logger instance                     |
+| `maxToolIterations` | `number`         | Max tool call rounds                |
+| `executeTools`      | `boolean`        | Whether to execute tools by default |
 
 ---
 
@@ -638,31 +625,32 @@ Orchestrates LLM inference with tool execution, usage tracking, and provider rou
 
 #### `constructor(config)`
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `config` | `BrainConfig` | Brain configuration |
+| Parameter | Type          | Description         |
+| --------- | ------------- | ------------------- |
+| `config`  | `BrainConfig` | Brain configuration |
 
 #### `registerProvider(provider)`
 
 Registers an additional LLM provider at runtime.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
+| Parameter  | Type          | Description          |
+| ---------- | ------------- | -------------------- |
 | `provider` | `LLMProvider` | Provider to register |
 
 #### `run(input)`
 
 Runs text generation with optional tool execution loop.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `input` | `BrainGenerateInput` | Generation input |
+| Parameter | Type                 | Description      |
+| --------- | -------------------- | ---------------- |
+| `input`   | `BrainGenerateInput` | Generation input |
 
 **Returns:** `Promise<BrainGenerateOutput>`
 
 **Throws:** `ProviderNotFoundError`, `ToolExecutionError`
 
 **Notes:**
+
 - Automatically executes tool calls up to `maxToolIterations` times
 - Aggregates usage across all iterations
 - Persists usage to storage asynchronously
@@ -671,9 +659,9 @@ Runs text generation with optional tool execution loop.
 
 Runs structured object generation.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `input` | `BrainObjectInput` | Object generation input |
+| Parameter | Type               | Description             |
+| --------- | ------------------ | ----------------------- |
+| `input`   | `BrainObjectInput` | Object generation input |
 
 **Returns:** `Promise<BrainObjectOutput<T>>`
 
@@ -705,12 +693,12 @@ type OpenAIProviderConfig = {
 };
 ```
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `apiKey` | `string` | — | OpenAI API key |
-| `baseUrl` | `string` | `"https://api.openai.com/v1"` | API base URL |
-| `defaultModel` | `string` | — | Default model name |
-| `fetch` | `typeof fetch` | `globalThis.fetch` | Custom fetch implementation |
+| Property       | Type           | Default                       | Description                 |
+| -------------- | -------------- | ----------------------------- | --------------------------- |
+| `apiKey`       | `string`       | —                             | OpenAI API key              |
+| `baseUrl`      | `string`       | `"https://api.openai.com/v1"` | API base URL                |
+| `defaultModel` | `string`       | —                             | Default model name          |
+| `fetch`        | `typeof fetch` | `globalThis.fetch`            | Custom fetch implementation |
 
 **Throws:** `ProviderRequestError` on API failure, `ValidationError` for invalid tool messages
 
@@ -744,12 +732,12 @@ export class LocalModelProvider implements LLMProvider {
 }
 ```
 
-OpenAI compatible provider for local models such as Ollama or LM Studio.
+OpenAI-compatible local model adapter for runtimes such as Ollama or LM Studio.
 
 By default, requests are sent to: `http://localhost:11434/v1/chat/completions`
 
 Supports:
-- OpenAI compatible local endpoints
+- OpenAI-compatible local endpoints
 - Custom base URLs
 - Optional API key authentication
 - Tool/function calling support
@@ -784,15 +772,15 @@ export type OrchestratorConfig = {
 
 Configuration for the Orchestrator.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `storage` | `Storage` | Persistence layer |
-| `logger` | `Logger` | Logger instance |
-| `defaultMode` | `ExecutionMode` | Default pipeline execution mode |
-| `metadata` | `Record<string, unknown>` | Global metadata added to all runs |
-| `hooks` | `PipelineHooks` | Global hooks |
-| `errorPolicy` | `"throw" \| "returnFallback"` | How to handle errors |
-| `fallbackOutput` | `unknown` | Default fallback output on error |
+| Property         | Type                          | Description                       |
+| ---------------- | ----------------------------- | --------------------------------- |
+| `storage`        | `Storage`                     | Persistence layer                 |
+| `logger`         | `Logger`                      | Logger instance                   |
+| `defaultMode`    | `ExecutionMode`               | Default pipeline execution mode   |
+| `metadata`       | `Record<string, unknown>`     | Global metadata added to all runs |
+| `hooks`          | `PipelineHooks`               | Global hooks                      |
+| `errorPolicy`    | `"throw" \| "returnFallback"` | How to handle errors              |
+| `fallbackOutput` | `unknown`                     | Default fallback output on error  |
 
 ---
 
@@ -812,25 +800,25 @@ Manages pipeline registry, execution lifecycle, hooks, and error handling.
 
 #### `constructor(config?)`
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `config` | `OrchestratorConfig` | `{}` | Orchestrator configuration |
+| Parameter | Type                 | Default | Description                |
+| --------- | -------------------- | ------- | -------------------------- |
+| `config`  | `OrchestratorConfig` | `{}`    | Orchestrator configuration |
 
 #### `registerPipeline(pipeline)`
 
 Registers a pipeline for execution.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
+| Parameter  | Type       | Description       |
+| ---------- | ---------- | ----------------- |
 | `pipeline` | `Pipeline` | Pipeline instance |
 
 #### `getPipeline(name)`
 
 Retrieves a registered pipeline by name.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `name` | `string` | Pipeline name |
+| Parameter | Type     | Description   |
+| --------- | -------- | ------------- |
+| `name`    | `string` | Pipeline name |
 
 **Returns:** `Pipeline | undefined`
 
@@ -838,17 +826,18 @@ Retrieves a registered pipeline by name.
 
 Executes a registered pipeline.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `name` | `string` | Pipeline name |
-| `input` | `unknown` | Pipeline input |
-| `options` | `PipelineRunOptions` | Run options |
+| Parameter | Type                 | Description    |
+| --------- | -------------------- | -------------- |
+| `name`    | `string`             | Pipeline name  |
+| `input`   | `unknown`            | Pipeline input |
+| `options` | `PipelineRunOptions` | Run options    |
 
 **Returns:** `Promise<T>` — Pipeline output
 
 **Throws:** `PipelineNotFoundError`, or the pipeline's own errors
 
 **Lifecycle:**
+
 1. Validates input against schema
 2. Emits `beforeRun` hooks
 3. Executes pipeline
@@ -859,18 +848,18 @@ Executes a registered pipeline.
 
 Runs multiple pipelines with a coordination strategy.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `strategy` | `Strategy` | Execution strategy |
-| `steps` | `Array<{ name: string; input: unknown }>` | Steps to execute |
+| Parameter  | Type                                      | Description        |
+| ---------- | ----------------------------------------- | ------------------ |
+| `strategy` | `Strategy`                                | Execution strategy |
+| `steps`    | `Array<{ name: string; input: unknown }>` | Steps to execute   |
 
 **Returns:** `Promise<unknown[]>` — Array of step outputs
 
-| Strategy | Behavior |
-|----------|----------|
-| `"parallel"` | Runs all steps concurrently |
-| `"sequential"` | Runs steps one at a time |
-| `"agentic"` / `"planner-executor"` | Sequential with logging |
+| Strategy                           | Behavior                    |
+| ---------------------------------- | --------------------------- |
+| `"parallel"`                       | Runs all steps concurrently |
+| `"sequential"`                     | Runs steps one at a time    |
+| `"agentic"` / `"planner-executor"` | Sequential with logging     |
 
 ---
 
@@ -890,13 +879,13 @@ export interface Pipeline<TInput = unknown, TOutput = unknown> {
 
 Core pipeline interface.
 
-| Property / Method | Type | Description |
-|-------------------|------|-------------|
-| `name` | `string` | Pipeline name |
-| `hooks` | `PipelineHooks` | Pipeline-specific hooks |
-| `inputSchema` | `ValidationSchema` | Input validation schema |
-| `run` | `(input, context?) => Promise<TOutput>` | Execute pipeline |
-| `validate?` | `(input) => void` | Custom validation hook |
+| Property / Method | Type                                    | Description             |
+| ----------------- | --------------------------------------- | ----------------------- |
+| `name`            | `string`                                | Pipeline name           |
+| `hooks`           | `PipelineHooks`                         | Pipeline-specific hooks |
+| `inputSchema`     | `ValidationSchema`                      | Input validation schema |
+| `run`             | `(input, context?) => Promise<TOutput>` | Execute pipeline        |
+| `validate?`       | `(input) => void`                       | Custom validation hook  |
 
 ---
 
@@ -992,11 +981,11 @@ export type PipelineHooks<TInput = unknown, TOutput = unknown> = {
 
 Lifecycle hooks for pipelines.
 
-| Hook | When Called | Return Value |
-|------|-------------|--------------|
-| `beforeRun` | Before pipeline execution | `void` |
-| `afterRun` | After successful execution | `void` |
-| `onError` | On execution failure | Fallback output or `void` |
+| Hook        | When Called                | Return Value              |
+| ----------- | -------------------------- | ------------------------- |
+| `beforeRun` | Before pipeline execution  | `void`                    |
+| `afterRun`  | After successful execution | `void`                    |
+| `onError`   | On execution failure       | Fallback output or `void` |
 
 ---
 
@@ -1057,16 +1046,16 @@ export type PipelineStepBase<TInput = unknown, TOutput = unknown> = {
 
 Base properties for all declarative pipeline steps.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `id` | `string` | Step identifier |
-| `input` | `TInput` | Static input |
-| `when` | `(state) => boolean` | Conditional execution |
-| `mapInput` | `(state) => TInput` | Dynamic input mapping |
-| `mapOutput` | `(output, state) => unknown` | Output transformation |
-| `retry` | `number \| { attempts: number }` | Retry policy |
-| `timeoutMs` | `number` | Step timeout |
-| `fallback` | `TOutput \| ((error, state) => TOutput)` | Fallback on failure |
+| Property    | Type                                     | Description           |
+| ----------- | ---------------------------------------- | --------------------- |
+| `id`        | `string`                                 | Step identifier       |
+| `input`     | `TInput`                                 | Static input          |
+| `when`      | `(state) => boolean`                     | Conditional execution |
+| `mapInput`  | `(state) => TInput`                      | Dynamic input mapping |
+| `mapOutput` | `(output, state) => unknown`             | Output transformation |
+| `retry`     | `number \| { attempts: number }`         | Retry policy          |
+| `timeoutMs` | `number`                                 | Step timeout          |
+| `fallback`  | `TOutput \| ((error, state) => TOutput)` | Fallback on failure   |
 
 ---
 
@@ -1142,18 +1131,18 @@ Abstract base class for custom pipelines.
 
 #### `constructor(config?)`
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `config.hooks` | `PipelineHooks` | Pipeline hooks |
+| Parameter            | Type               | Description             |
+| -------------------- | ------------------ | ----------------------- |
+| `config.hooks`       | `PipelineHooks`    | Pipeline hooks          |
 | `config.inputSchema` | `ValidationSchema` | Input validation schema |
 
 #### `validate(input)`
 
 Validates input against `inputSchema` if defined.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `input` | `TInput` | Input to validate |
+| Parameter | Type     | Description       |
+| --------- | -------- | ----------------- |
+| `input`   | `TInput` | Input to validate |
 
 #### `emit(context, type, payload?)`
 
@@ -1187,13 +1176,13 @@ export type ScrapePipelineInput = {
 };
 ```
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `url` | `string` | Target URL to scrape |
-| `strategy` | `string` | Scraping strategy |
-| `maxDepth` | `number` | Max crawl depth |
-| `maxPages` | `number` | Max pages to fetch |
-| `detailLevel` | `string` | Detail level |
+| Property          | Type      | Description            |
+| ----------------- | --------- | ---------------------- |
+| `url`             | `string`  | Target URL to scrape   |
+| `strategy`        | `string`  | Scraping strategy      |
+| `maxDepth`        | `number`  | Max crawl depth        |
+| `maxPages`        | `number`  | Max pages to fetch     |
+| `detailLevel`     | `string`  | Detail level           |
 | `includeExternal` | `boolean` | Include external links |
 
 **Throws:** `Error` if `url` is missing
@@ -1216,14 +1205,19 @@ Pipeline for managing interactive onboarding sessions.
 
 ```ts
 export type OnboardingApiInput =
-  | { operation: "createSession"; pipelineId: string; fields: Array<{ id: string; question: string }>; context?: string }
+  | {
+      operation: "createSession";
+      pipelineId: string;
+      fields: Array<{ id: string; question: string }>;
+      context?: string;
+    }
   | { operation: "answer"; sessionId: string; fieldId: string; value: unknown };
 ```
 
-| Operation | Description |
-|-----------|-------------|
+| Operation         | Description                     |
+| ----------------- | ------------------------------- |
 | `"createSession"` | Create a new onboarding session |
-| `"answer"` | Submit an answer for a field |
+| `"answer"`        | Submit an answer for a field    |
 
 ---
 
@@ -1233,7 +1227,10 @@ export type OnboardingApiInput =
 export class DeclarativePipeline implements Pipeline {
   readonly name: string;
   readonly hooks;
-  constructor(config: DeclarativePipelineConfig, deps: { brain: Brain; tools: ToolRegistry; orchestrator?: Orchestrator });
+  constructor(
+    config: DeclarativePipelineConfig,
+    deps: { brain: Brain; tools: ToolRegistry; orchestrator?: Orchestrator },
+  );
   run(input: unknown, context?: PipelineContext): Promise<unknown>;
 }
 ```
@@ -1242,14 +1239,15 @@ Pipeline defined via a declarative configuration of steps.
 
 #### `constructor(config, deps)`
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `config` | `DeclarativePipelineConfig` | Step definitions |
-| `deps.brain` | `Brain` | Brain for LLM steps |
-| `deps.tools` | `ToolRegistry` | Tools for tool steps |
-| `deps.orchestrator` | `Orchestrator` | Required for nested pipeline steps |
+| Parameter           | Type                        | Description                        |
+| ------------------- | --------------------------- | ---------------------------------- |
+| `config`            | `DeclarativePipelineConfig` | Step definitions                   |
+| `deps.brain`        | `Brain`                     | Brain for LLM steps                |
+| `deps.tools`        | `ToolRegistry`              | Tools for tool steps               |
+| `deps.orchestrator` | `Orchestrator`              | Required for nested pipeline steps |
 
 **Features:**
+
 - Conditional execution via `when`
 - Input/output mapping
 - Retry with configurable attempts
@@ -1382,10 +1380,10 @@ export interface ToolConnector<TInput = unknown, TOutput = unknown> extends Tool
 
 Executable tool connector.
 
-| Property / Method | Type | Description |
-|-------------------|------|-------------|
-| `type` | `ToolRuntime` | Runtime type |
-| `call` | `(input) => Promise<TOutput>` | Execute the tool |
+| Property / Method | Type                          | Description      |
+| ----------------- | ----------------------------- | ---------------- |
+| `type`            | `ToolRuntime`                 | Runtime type     |
+| `call`            | `(input) => Promise<TOutput>` | Execute the tool |
 
 ---
 
@@ -1407,17 +1405,17 @@ Registry for managing and executing tools.
 
 Registers a tool connector.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
+| Parameter   | Type            | Description      |
+| ----------- | --------------- | ---------------- |
 | `connector` | `ToolConnector` | Tool to register |
 
 #### `get(name)`
 
 Retrieves a tool by name.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `name` | `string` | Tool name |
+| Parameter | Type     | Description |
+| --------- | -------- | ----------- |
+| `name`    | `string` | Tool name   |
 
 **Returns:** `ToolConnector | undefined`
 
@@ -1431,9 +1429,9 @@ Lists all registered tools.
 
 Resolves tool definitions to connectors.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `tools` | `ToolDefinition[] \| string[]` | Tool names or definitions |
+| Parameter | Type                           | Description               |
+| --------- | ------------------------------ | ------------------------- |
+| `tools`   | `ToolDefinition[] \| string[]` | Tool names or definitions |
 
 **Returns:** `ToolConnector[]` — Unresolved tools become local no-ops
 
@@ -1441,10 +1439,10 @@ Resolves tool definitions to connectors.
 
 Executes a tool by name.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `name` | `string` | Tool name |
-| `input` | `unknown` | Tool input |
+| Parameter | Type      | Description |
+| --------- | --------- | ----------- |
+| `name`    | `string`  | Tool name   |
+| `input`   | `unknown` | Tool input  |
 
 **Returns:** `Promise<unknown>` — Tool output
 
@@ -1461,7 +1459,7 @@ export class LocalToolConnector<TInput = unknown, TOutput = unknown> implements 
     name: string,
     handler: (input: TInput) => Promise<TOutput> | TOutput,
     description?: string,
-    schema?: unknown
+    schema?: unknown,
   );
   call(input: TInput): Promise<TOutput>;
 }
@@ -1469,12 +1467,12 @@ export class LocalToolConnector<TInput = unknown, TOutput = unknown> implements 
 
 Local function-based tool connector.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `name` | `string` | Tool name |
-| `handler` | `(input) => TOutput \| Promise<TOutput>` | Tool implementation |
-| `description` | `string` | Tool description |
-| `schema` | `unknown` | JSON schema for parameters |
+| Parameter     | Type                                     | Description                |
+| ------------- | ---------------------------------------- | -------------------------- |
+| `name`        | `string`                                 | Tool name                  |
+| `handler`     | `(input) => TOutput \| Promise<TOutput>` | Tool implementation        |
+| `description` | `string`                                 | Tool description           |
+| `schema`      | `unknown`                                | JSON schema for parameters |
 
 ---
 
@@ -1487,7 +1485,7 @@ export class TransportToolConnector<TInput = unknown, TOutput = unknown> impleme
     name: string,
     transport: Transport,
     description?: string,
-    schema?: unknown
+    schema?: unknown,
   );
   call(input: TInput): Promise<TOutput>;
 }
@@ -1495,13 +1493,13 @@ export class TransportToolConnector<TInput = unknown, TOutput = unknown> impleme
 
 Tool connector that delegates to a Transport layer.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `type` | `ToolRuntime` | Transport type (`stdio`, `http`, `grpc`) |
-| `name` | `string` | Tool name |
-| `transport` | `Transport` | Transport instance |
-| `description` | `string` | Tool description |
-| `schema` | `unknown` | JSON schema for parameters |
+| Parameter     | Type          | Description                              |
+| ------------- | ------------- | ---------------------------------------- |
+| `type`        | `ToolRuntime` | Transport type (`stdio`, `http`, `grpc`) |
+| `name`        | `string`      | Tool name                                |
+| `transport`   | `Transport`   | Transport instance                       |
+| `description` | `string`      | Tool description                         |
+| `schema`      | `unknown`     | JSON schema for parameters               |
 
 ---
 
@@ -1559,10 +1557,10 @@ export class HttpTransport implements Transport {
 
 HTTP transport implementation using `fetch`.
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `baseUrl` | `string` | `""` | Base URL prefix |
-| `fetch` | `typeof fetch` | `globalThis.fetch` | Custom fetch implementation |
+| Parameter | Type           | Default            | Description                 |
+| --------- | -------------- | ------------------ | --------------------------- |
+| `baseUrl` | `string`       | `""`               | Base URL prefix             |
+| `fetch`   | `typeof fetch` | `globalThis.fetch` | Custom fetch implementation |
 
 ---
 
@@ -1574,7 +1572,7 @@ export class WebSocketTransport implements Transport {
 }
 ```
 
-Placeholder WebSocket transport. Throws `Error` — provide a runtime-specific adapter.
+WebSocket transport that sends request envelopes with generated IDs and resolves matching response envelopes. Supports an injected socket or a URL plus a WebSocket constructor.
 
 ---
 
@@ -1586,7 +1584,7 @@ export class StdioTransport implements Transport {
 }
 ```
 
-Placeholder stdio transport. Throws `Error` — provide a runtime-specific adapter.
+STDIO transport wrapper around an injected client with a `send(request)` method.
 
 ---
 
@@ -1613,10 +1611,10 @@ export class QueueTransport implements Transport {
 
 Transport that enqueues requests to a queue system.
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `queue` | `QueueClient` | — | Queue client |
-| `queueName` | `string` | `"agent-sdk"` | Queue name |
+| Parameter   | Type          | Default       | Description  |
+| ----------- | ------------- | ------------- | ------------ |
+| `queue`     | `QueueClient` | —             | Queue client |
+| `queueName` | `string`      | `"agent-sdk"` | Queue name   |
 
 ---
 
@@ -1701,10 +1699,7 @@ Matching criteria for email workflow rules.
 ### `WorkflowRuleAction`
 
 ```ts
-export type WorkflowRuleAction =
-  | { kind: "reply"; text: string }
-  | { kind: "skip" }
-  | { kind: "forward"; to: string };
+export type WorkflowRuleAction = { kind: "reply"; text: string } | { kind: "skip" } | { kind: "forward"; to: string };
 ```
 
 Actions available for workflow rules.
@@ -1742,16 +1737,16 @@ export interface Storage {
 
 Storage interface for persistence. All methods except `saveRun` and `getRuns` are optional.
 
-| Method | Description |
-|--------|-------------|
-| `saveRun` | Save a pipeline run record |
-| `updateRun` | Update an existing run |
-| `getRuns` | Query run records |
-| `saveUsage` | Save LLM usage data |
-| `getUsage` | Query usage records |
-| `getEmailPipelineByUser` | Get email pipeline by user |
+| Method                           | Description                         |
+| -------------------------------- | ----------------------------------- |
+| `saveRun`                        | Save a pipeline run record          |
+| `updateRun`                      | Update an existing run              |
+| `getRuns`                        | Query run records                   |
+| `saveUsage`                      | Save LLM usage data                 |
+| `getUsage`                       | Query usage records                 |
+| `getEmailPipelineByUser`         | Get email pipeline by user          |
 | `getEmailPipelineByWebhookToken` | Get email pipeline by webhook token |
-| `saveEmailPipeline` | Save email pipeline config |
+| `saveEmailPipeline`              | Save email pipeline config          |
 
 ---
 
@@ -1797,9 +1792,9 @@ Prisma ORM storage adapter.
 
 ```ts
 type PrismaLike = {
-  llmUsage?: { create(input); findMany(input?); };
-  emailPipeline?: { findUnique(input); create(input); update(input); };
-  orchestrationRun?: { create(input); findMany(input?); update(input); };
+  llmUsage?: { create(input); findMany(input?) };
+  emailPipeline?: { findUnique(input); create(input); update(input) };
+  orchestrationRun?: { create(input); findMany(input?); update(input) };
 };
 ```
 
@@ -1821,13 +1816,13 @@ export interface SessionMemory {
 
 Interface for session/memory storage.
 
-| Method | Description |
-|--------|-------------|
-| `getSession` | Retrieve a session value |
-| `setSession` | Store a session value with optional TTL |
-| `deleteSession` | Remove a session |
-| `appendPersistent` | Append to a persistent list |
-| `readPersistent` | Read a persistent list |
+| Method             | Description                             |
+| ------------------ | --------------------------------------- |
+| `getSession`       | Retrieve a session value                |
+| `setSession`       | Store a session value with optional TTL |
+| `deleteSession`    | Remove a session                        |
+| `appendPersistent` | Append to a persistent list             |
+| `readPersistent`   | Read a persistent list                  |
 
 ---
 
@@ -1899,9 +1894,9 @@ export class ApiKeyAuthProvider implements AuthProvider {
 
 Bearer token / API key authentication provider.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `keys` | `ApiKeyStore` | API key store |
+| Parameter | Type          | Description   |
+| --------- | ------------- | ------------- |
+| `keys`    | `ApiKeyStore` | API key store |
 
 **Notes:** Extracts token from `request.token` or `Authorization: Bearer <token>` header.
 
@@ -1915,7 +1910,7 @@ export class OAuthProvider implements AuthProvider {
 }
 ```
 
-Placeholder OAuth provider. Throws `Error` — provide an OAuth/OIDC verifier adapter.
+OAuth provider that extracts a bearer token from `request.token` or the `Authorization` header and delegates verification to an injected verifier function or object.
 
 ---
 
@@ -1964,10 +1959,10 @@ export class InternalEventTrigger<T = unknown> implements Trigger<T> {
 
 In-memory event trigger. Use `emit()` to fire events programmatically.
 
-| Method | Description |
-|--------|-------------|
+| Method  | Description          |
+| ------- | -------------------- |
 | `start` | Attach event handler |
-| `emit` | Fire an event |
+| `emit`  | Fire an event        |
 
 **Throws:** `Error` if `emit` is called before `start`
 
@@ -1983,7 +1978,7 @@ export class WebhookTrigger<T = unknown> implements Trigger<T> {
 }
 ```
 
-Webhook trigger placeholder. Framework adapters bind HTTP requests to the handler.
+Webhook trigger that stores a handler and exposes `handle({ body, headers })` so host framework routes can invoke it.
 
 ---
 
@@ -1997,11 +1992,11 @@ export class CronTrigger<T = unknown> implements Trigger<T> {
 }
 ```
 
-Cron trigger placeholder. Runtime adapters provide scheduling.
+Cron trigger that supports an injected scheduler, interval-based local scheduling, and manual `fire()` calls.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `name` | `string` | Trigger name |
+| Parameter  | Type     | Description     |
+| ---------- | -------- | --------------- |
+| `name`     | `string` | Trigger name    |
 | `schedule` | `string` | Cron expression |
 
 ---
@@ -2021,12 +2016,12 @@ export type AgentSDKConfig = OrchestratorConfig & {
 
 Configuration for the main AgentSDK.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `brain` | `Brain` | Brain instance |
-| `provider` | `Brain` | Alias for `brain` |
+| Property    | Type        | Description       |
+| ----------- | ----------- | ----------------- |
+| `brain`     | `Brain`     | Brain instance    |
+| `provider`  | `Brain`     | Alias for `brain` |
 | `transport` | `Transport` | Default transport |
-| `storage` | `Storage` | Storage instance |
+| `storage`   | `Storage`   | Storage instance  |
 
 **Notes:** Inherits all `OrchestratorConfig` properties.
 
@@ -2051,18 +2046,18 @@ Main entry point for the Agent SDK. Composes Brain, Orchestrator, and pipelines.
 
 #### `constructor(config?)`
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `config` | `AgentSDKConfig` | `{}` | SDK configuration |
+| Parameter | Type             | Default | Description       |
+| --------- | ---------------- | ------- | ----------------- |
+| `config`  | `AgentSDKConfig` | `{}`    | SDK configuration |
 
 #### `registerPipeline(pipeline)` / `registerPipeline(name, pipeline)`
 
 Registers a pipeline.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `name` | `string` | Pipeline name (optional if pipeline has `name`) |
-| `pipeline` | `Pipeline` | Pipeline instance |
+| Parameter  | Type       | Description                                     |
+| ---------- | ---------- | ----------------------------------------------- |
+| `name`     | `string`   | Pipeline name (optional if pipeline has `name`) |
+| `pipeline` | `Pipeline` | Pipeline instance                               |
 
 **Throws:** `Error` if pipeline is missing
 
@@ -2070,11 +2065,11 @@ Registers a pipeline.
 
 Runs a registered pipeline.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `name` | `string` | Pipeline name |
-| `input` | `unknown` | Pipeline input |
-| `options` | `PipelineRunOptions` | Run options |
+| Parameter | Type                 | Description    |
+| --------- | -------------------- | -------------- |
+| `name`    | `string`             | Pipeline name  |
+| `input`   | `unknown`            | Pipeline input |
+| `options` | `PipelineRunOptions` | Run options    |
 
 **Returns:** `Promise<T>` — Pipeline output
 
@@ -2082,10 +2077,10 @@ Runs a registered pipeline.
 
 Runs multiple pipelines with a coordination strategy.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `strategy` | `Strategy` | Execution strategy |
-| `steps` | `Array<{ name: string; input: unknown }>` | Steps to execute |
+| Parameter  | Type                                      | Description        |
+| ---------- | ----------------------------------------- | ------------------ |
+| `strategy` | `Strategy`                                | Execution strategy |
+| `steps`    | `Array<{ name: string; input: unknown }>` | Steps to execute   |
 
 **Returns:** `Promise<unknown[]>` — Array of step outputs
 
@@ -2109,4 +2104,4 @@ The following are re-exported from `sdk/index.ts`:
 
 ---
 
-*Generated on 2026-05-05 from source files in `/root/projects/agent-sdk/sdk/`.*
+_Generated on 2026-05-05 from source files in `/root/projects/agent-sdk/sdk/`._

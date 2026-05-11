@@ -8,6 +8,7 @@ import type {
   AgentTeamRunInput,
   AgentTeamRunOutput,
 } from "./contracts.js";
+import { TeamRuntime } from "./team/TeamRuntime.js";
 
 export class AgentTeam {
   readonly name: string;
@@ -38,7 +39,9 @@ export class AgentTeam {
     if (this.config.mode === "manager") return this.runManager(input, context);
     if (this.config.mode === "sequential") return this.runSequential(input, context);
     if (this.config.mode === "parallel") return this.runParallel(input, context);
+    if (this.config.mode === "router") return this.runRouter(input, context);
 
+    // Future strategy runtimes for handoff and planner-executor can plug in here.
     throw new Error(
       `[AgentTeam] mode "${this.config.mode}" is an advanced strategy and is not implemented in the stable team loop yet`,
     );
@@ -78,16 +81,34 @@ export class AgentTeam {
       return this.toTeamOutput(formatAgentResults(results), results);
     }
 
-    const synthesis = await this.config.manager.run({
-      ...input,
-      input: [
-        "Synthesize these agent results into a single response.",
-        `Original input: ${input.input}`,
-        formatAgentResults(results),
-      ].join("\n\n"),
-    }, context);
+    const synthesis = await this.config.manager.run(
+      {
+        ...input,
+        input: [
+          "Synthesize these agent results into a single response.",
+          `Original input: ${input.input}`,
+          formatAgentResults(results),
+        ].join("\n\n"),
+      },
+      context,
+    );
 
     return this.toTeamOutput(synthesis.text, [...results, synthesis], synthesis.raw);
+  }
+
+  private runRouter(input: AgentRunInput, context?: PipelineContext): Promise<AgentTeamRunOutput> {
+    const manager = this.requireManager();
+    return new TeamRuntime({
+      name: this.name,
+      manager,
+      agents: this.specialists(),
+      brain: this.config.brain,
+      tools: this.config.tools,
+      memory: this.config.memory,
+      maxSteps: this.config.maxSteps,
+      maxCallsPerAgent: this.config.maxCallsPerAgent,
+      metadata: this.config.metadata,
+    }).run(input, context);
   }
 
   private specialists(): Agent[] {

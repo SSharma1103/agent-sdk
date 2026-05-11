@@ -53,8 +53,13 @@ export class LocalModelProvider implements LLMProvider {
       throw new ProviderRequestError("LocalModelProvider", response.status, await response.text());
     }
 
-    const json = await response.json() as {
-      choices?: Array<{ message?: { content?: string; tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> } }>;
+    const json = (await response.json()) as {
+      choices?: Array<{
+        message?: {
+          content?: string;
+          tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }>;
+        };
+      }>;
       usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
     };
     const message = json.choices?.[0]?.message;

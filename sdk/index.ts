@@ -13,6 +13,11 @@ export * from "./agents/contracts.js";
 export * from "./agents/Agent.js";
 export * from "./agents/AgentTeam.js";
 export * from "./agents/AgentPipeline.js";
+export * from "./agents/team/contracts.js";
+export * from "./agents/team/TeamMessageBus.js";
+export * from "./agents/team/TeamRouter.js";
+export * from "./agents/team/TeamRuntime.js";
+export * from "./agents/team/TeamState.js";
 
 export * from "./pipelines/contracts.js";
 export * from "./pipelines/PipelineBase.js";

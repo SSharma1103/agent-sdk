@@ -1,13 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  Agent,
-  AgentSDK,
-  AgentTeam,
-  Brain,
-  InMemorySessionStore,
-  ToolRegistry,
-} from "../dist/sdk/index.js";
+import { Agent, AgentSDK, AgentTeam, Brain, InMemorySessionStore, ToolRegistry } from "../dist/sdk/index.js";
 import { createDevUiServer } from "../dist/examples/dev-ui/server/devServer.js";
 
 class EchoProvider {
@@ -28,11 +21,10 @@ test("dev UI server lists agents and teams", async () => {
     const body = await response.json();
 
     assert.equal(response.status, 200);
-    assert.deepEqual(body.targets.map((target) => `${target.type}:${target.name}`), [
-      "agent:researcher",
-      "agent:writer",
-      "team:research-team",
-    ]);
+    assert.deepEqual(
+      body.targets.map((target) => `${target.type}:${target.name}`),
+      ["agent:researcher", "agent:writer", "team:research-team"],
+    );
   } finally {
     await fixture.close();
   }
@@ -145,16 +137,22 @@ async function createFixture() {
   const tools = new ToolRegistry();
   const brain = new Brain({ providers: [new EchoProvider()], tools });
   const sdk = new AgentSDK({ brain });
-  const researcher = new Agent({
-    name: "researcher",
-    instructions: "Research",
-    model: "research-model",
-  }, { brain, memory });
-  const writer = new Agent({
-    name: "writer",
-    instructions: "Write",
-    model: "writer-model",
-  }, { brain, memory });
+  const researcher = new Agent(
+    {
+      name: "researcher",
+      instructions: "Research",
+      model: "research-model",
+    },
+    { brain, memory },
+  );
+  const writer = new Agent(
+    {
+      name: "writer",
+      instructions: "Write",
+      model: "writer-model",
+    },
+    { brain, memory },
+  );
   const team = new AgentTeam({
     name: "research-team",
     mode: "sequential",

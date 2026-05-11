@@ -12,9 +12,11 @@ export interface ApiKeyStore {
   findByToken(token: string): Promise<Principal | null>;
 }
 
-export type OAuthVerifier = {
-  verify(token: string, request?: { headers?: Record<string, string>; token?: string }): Promise<Principal | null>;
-} | ((token: string, request?: { headers?: Record<string, string>; token?: string }) => Promise<Principal | null>);
+export type OAuthVerifier =
+  | {
+      verify(token: string, request?: { headers?: Record<string, string>; token?: string }): Promise<Principal | null>;
+    }
+  | ((token: string, request?: { headers?: Record<string, string>; token?: string }) => Promise<Principal | null>);
 
 export class ApiKeyAuthProvider implements AuthProvider {
   constructor(private readonly keys: ApiKeyStore) {}
