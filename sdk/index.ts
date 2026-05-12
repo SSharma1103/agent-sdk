@@ -45,3 +45,7 @@ export * from "./memory/contracts.js";
 export { InMemorySessionStore } from "./memory/contracts.js";
 export * from "./triggers/contracts.js";
 export * from "./auth/contracts.js";
+export * from "./rag/contracts.js";
+export * from "./rag/chunking.js";
+export * from "./rag/embeddings.js";
+export * from "./rag/InMemoryVectorStore.js";
