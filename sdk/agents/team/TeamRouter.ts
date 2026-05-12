@@ -141,9 +141,7 @@ export class TeamRouter {
 
   private formatAgentList(): string {
     if (!this.agents.length) return "No specialist agents are available.";
-    return this.agents
-      .map((agent) => `- ${agent.name}: ${agent.description ?? "No description provided."}`)
-      .join("\n");
+    return this.agents.map((agent) => `- ${agent.name}: ${agent.description ?? "No description provided."}`).join("\n");
   }
 
   private fallbackDecision(state: TeamState): RouterDecision {
@@ -224,7 +222,8 @@ function buildFallbackAnswer(state: TeamState): string {
   if (!state.results.length) {
     return "I could not complete the team routing loop because the manager did not return a valid decision.";
   }
-  return ["I could not complete the team routing loop, but these results were gathered:", state.summarizeResults()].join(
-    "\n\n",
-  );
+  return [
+    "I could not complete the team routing loop, but these results were gathered:",
+    state.summarizeResults(),
+  ].join("\n\n");
 }

@@ -723,12 +723,7 @@ Placeholder adapter for Anthropic. Throws `NotImplementedError` — provide a cu
 export class LocalModelProvider implements LLMProvider {
   readonly name = "local";
 
-  constructor(config?: {
-    baseUrl?: string;
-    apiKey?: string;
-    defaultModel?: string;
-    fetch?: typeof fetch;
-  });
+  constructor(config?: { baseUrl?: string; apiKey?: string; defaultModel?: string; fetch?: typeof fetch });
 }
 ```
 
@@ -737,6 +732,7 @@ OpenAI-compatible local model adapter for runtimes such as Ollama or LM Studio.
 By default, requests are sent to: `http://localhost:11434/v1/chat/completions`
 
 Supports:
+
 - OpenAI-compatible local endpoints
 - Custom base URLs
 - Optional API key authentication

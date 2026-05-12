@@ -577,23 +577,32 @@ test("agent teams support router mode with bounded manager decisions", async () 
 
   const provider = new RouterProvider();
   const brain = new Brain({ providers: [provider] });
-  const scraper = new Agent({
-    name: "scraper",
-    description: "Collects facts.",
-    instructions: "Scrape.",
-    model: "scraper-model",
-  }, { brain });
-  const judge = new Agent({
-    name: "judge",
-    description: "Reviews facts.",
-    instructions: "Judge.",
-    model: "judge-model",
-  }, { brain });
-  const manager = new Agent({
-    name: "manager",
-    instructions: "Route.",
-    model: "manager-model",
-  }, { brain });
+  const scraper = new Agent(
+    {
+      name: "scraper",
+      description: "Collects facts.",
+      instructions: "Scrape.",
+      model: "scraper-model",
+    },
+    { brain },
+  );
+  const judge = new Agent(
+    {
+      name: "judge",
+      description: "Reviews facts.",
+      instructions: "Judge.",
+      model: "judge-model",
+    },
+    { brain },
+  );
+  const manager = new Agent(
+    {
+      name: "manager",
+      instructions: "Route.",
+      model: "manager-model",
+    },
+    { brain },
+  );
   const team = new AgentTeam({
     name: "router-team",
     mode: "router",
@@ -609,7 +618,10 @@ test("agent teams support router mode with bounded manager decisions", async () 
 
   assert.equal(output.mode, "router");
   assert.equal(output.text, "final launch plan");
-  assert.deepEqual(output.results.map((result) => result.agentName), ["scraper", "judge"]);
+  assert.deepEqual(
+    output.results.map((result) => result.agentName),
+    ["scraper", "judge"],
+  );
   assert.equal(output.usage.totalTokens, 4);
   assert.ok(output.raw.state.messages.some((message) => message.channel === "findings"));
   assert.ok(provider.objectPrompts[1].includes("scraper: scraper-model:Collect launch facts"));

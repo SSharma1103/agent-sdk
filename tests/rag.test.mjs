@@ -1,10 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  InMemoryVectorStore,
-  chunkDocument,
-  embedChunks,
-} from "../dist/sdk/index.js";
+import { InMemoryVectorStore, chunkDocument, embedChunks } from "../dist/sdk/index.js";
 
 class FakeEmbeddingProvider {
   name = "fake";

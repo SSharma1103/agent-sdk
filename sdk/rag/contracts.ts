@@ -27,11 +27,7 @@ export type ChunkOptions = {
 
 export interface EmbeddingProvider {
   name: string;
-  embedText(input: {
-    text: string;
-    model?: string;
-    metadata?: Record<string, unknown>;
-  }): Promise<{
+  embedText(input: { text: string; model?: string; metadata?: Record<string, unknown> }): Promise<{
     embedding: number[];
     model?: string;
     usage?: {
@@ -40,11 +36,7 @@ export interface EmbeddingProvider {
     raw?: unknown;
   }>;
 
-  embedMany?(input: {
-    texts: string[];
-    model?: string;
-    metadata?: Record<string, unknown>;
-  }): Promise<{
+  embedMany?(input: { texts: string[]; model?: string; metadata?: Record<string, unknown> }): Promise<{
     embeddings: number[][];
     model?: string;
     usage?: {
@@ -56,11 +48,7 @@ export interface EmbeddingProvider {
 
 export interface VectorStore {
   upsert(chunks: Array<RagChunk & { embedding: number[] }>): Promise<void>;
-  search(input: {
-    embedding: number[];
-    topK?: number;
-    filter?: Record<string, unknown>;
-  }): Promise<
+  search(input: { embedding: number[]; topK?: number; filter?: Record<string, unknown> }): Promise<
     Array<{
       chunk: RagChunk;
       score: number;

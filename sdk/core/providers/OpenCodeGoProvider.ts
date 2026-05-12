@@ -29,9 +29,7 @@ export class OpenCodeGoProvider implements LLMProvider {
   async generate(input: BrainGenerateInput, tools?: ToolRegistry): Promise<BrainGenerateOutput> {
     const apiKey = input.apiKey ?? this.config.apiKey ?? getEnv("OPENCODE_GO_API_KEY");
     if (!apiKey) {
-      throw new Error(
-        '[OpenCodeGoProvider] apiKey is required. Pass apiKey to Brain.run or set OPENCODE_GO_API_KEY.',
-      );
+      throw new Error("[OpenCodeGoProvider] apiKey is required. Pass apiKey to Brain.run or set OPENCODE_GO_API_KEY.");
     }
 
     const resolvedTools = tools?.resolveMany(input.tools);

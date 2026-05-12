@@ -1,10 +1,7 @@
 import { Brain, OpenAIProvider, OpenCodeGoProvider } from "../sdk/index.js";
 
 const brain = new Brain({
-  providers: [
-    new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY }),
-    new OpenCodeGoProvider(),
-  ],
+  providers: [new OpenAIProvider({ apiKey: process.env.OPENAI_API_KEY }), new OpenCodeGoProvider()],
   defaultProvider: "openai",
 });
 
