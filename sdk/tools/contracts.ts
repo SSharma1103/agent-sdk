@@ -6,6 +6,7 @@ export type ToolDefinition = {
   name: string;
   description?: string;
   schema?: unknown;
+  inputSchema?: unknown;
 };
 
 export interface ToolConnector<TInput = unknown, TOutput = unknown> extends ToolDefinition {
@@ -22,6 +23,10 @@ export class ToolRegistry {
 
   get(name: string): ToolConnector | undefined {
     return this.connectors.get(name);
+  }
+
+  unregister(name: string): boolean {
+    return this.connectors.delete(name);
   }
 
   list(): ToolConnector[] {

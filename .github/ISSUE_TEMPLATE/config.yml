@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions and support
+    url: https://github.com/SSharma1103/agent-sdk/discussions
+    about: Ask usage questions or discuss ideas before opening an issue.
+  - name: Security report
+    url: https://github.com/SSharma1103/agent-sdk/security/advisories/new
+    about: Please report vulnerabilities privately.

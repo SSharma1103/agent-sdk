@@ -9,11 +9,7 @@ import type { EmailPipelineConfigPatch, EmailPipelineInput, EmailPipelineOutput,
 import { createId } from "../../utils/id.js";
 
 export type EmailPipelineHooks = {
-  matchRule?(
-    rule: WorkflowRule,
-    email: IncomingEmail,
-    pipeline: EmailPipelineRecord,
-  ): boolean | Promise<boolean>;
+  matchRule?(rule: WorkflowRule, email: IncomingEmail, pipeline: EmailPipelineRecord): boolean | Promise<boolean>;
   onRuleMatched?(
     rule: WorkflowRule,
     email: IncomingEmail,
@@ -157,7 +153,7 @@ export class EmailPipeline implements Pipeline<EmailPipelineInput, EmailPipeline
   async getDashboardStats(userId: string): Promise<{ rulesHandled: number; brainReplies: number; tokensUsed: number }> {
     const pipeline = await this.deps.storage.getEmailPipelineByUser?.(userId);
     if (!pipeline?.keyId) return { rulesHandled: 0, brainReplies: 0, tokensUsed: 0 };
-    const usageRows = await this.deps.storage.getUsage?.({ userId, keyId: pipeline.keyId }) ?? [];
+    const usageRows = (await this.deps.storage.getUsage?.({ userId, keyId: pipeline.keyId })) ?? [];
     return {
       rulesHandled: 0,
       brainReplies: usageRows.length,

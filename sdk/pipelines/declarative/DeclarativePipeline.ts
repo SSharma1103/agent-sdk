@@ -1,6 +1,12 @@
 import type { Brain } from "../../core/Brain.js";
 import type { ToolRegistry } from "../../tools/contracts.js";
-import type { DeclarativePipelineConfig, Pipeline, PipelineContext, PipelineStep, PipelineStepState } from "../contracts.js";
+import type {
+  DeclarativePipelineConfig,
+  Pipeline,
+  PipelineContext,
+  PipelineStep,
+  PipelineStepState,
+} from "../contracts.js";
 import type { Orchestrator } from "../../orchestrator/Orchestrator.js";
 
 export class DeclarativePipeline implements Pipeline {

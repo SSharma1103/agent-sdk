@@ -6,12 +6,18 @@ export * from "./validation.js";
 export * from "./core/Brain.js";
 export * from "./core/contracts.js";
 export * from "./core/providers/OpenAIProvider.js";
+export * from "./core/providers/OpenCodeGoProvider.js";
 export * from "./core/providers/PlaceholderProviders.js";
 
 export * from "./agents/contracts.js";
 export * from "./agents/Agent.js";
 export * from "./agents/AgentTeam.js";
 export * from "./agents/AgentPipeline.js";
+export * from "./agents/team/contracts.js";
+export * from "./agents/team/TeamMessageBus.js";
+export * from "./agents/team/TeamRouter.js";
+export * from "./agents/team/TeamRuntime.js";
+export * from "./agents/team/TeamState.js";
 
 export * from "./pipelines/contracts.js";
 export * from "./pipelines/PipelineBase.js";
@@ -22,8 +28,14 @@ export * from "./pipelines/email/EmailPipeline.js";
 export * from "./pipelines/email/types.js";
 
 export * from "./orchestrator/Orchestrator.js";
+export * from "./mcp/McpServerConfig.js";
+export * from "./mcp/parseMcpCommand.js";
+export * from "./mcp/validateMcpCommand.js";
+export * from "./mcp/McpServerConnection.js";
+export * from "./mcp/McpToolLoader.js";
 export * from "./tools/contracts.js";
 export * from "./tools/connectors.js";
+export * from "./connectors/mcp/McpToolConnector.js";
 export * from "./transport/contracts.js";
 export * from "./transport/adapters.js";
 export * from "./storage/contracts.js";

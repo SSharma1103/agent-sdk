@@ -26,7 +26,7 @@ export class OpenAIProvider implements LLMProvider {
   }
 
   async generate(input: BrainGenerateInput, tools?: ToolRegistry): Promise<BrainGenerateOutput> {
-    const apiKey = this.config.apiKey;
+    const apiKey = input.apiKey ?? this.config.apiKey;
     if (!apiKey) throw new Error("[OpenAIProvider] apiKey is required");
 
     const resolvedTools = tools?.resolveMany(input.tools);
@@ -54,8 +54,13 @@ export class OpenAIProvider implements LLMProvider {
       throw new ProviderRequestError("OpenAIProvider", response.status, await response.text());
     }
 
-    const json = await response.json() as {
-      choices?: Array<{ message?: { content?: string; tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> } }>;
+    const json = (await response.json()) as {
+      choices?: Array<{
+        message?: {
+          content?: string;
+          tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }>;
+        };
+      }>;
       usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
     };
 

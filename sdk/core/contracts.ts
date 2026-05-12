@@ -17,10 +17,13 @@ export type ToolCall = {
   input: unknown;
 };
 
+export type LLMProviderName = "openai" | "anthropic" | "local" | "opencode-go" | (string & {});
+
 export type BrainGenerateInput = {
   userId?: string;
   keyId?: string;
-  provider?: string;
+  provider?: LLMProviderName;
+  apiKey?: string;
   model: string;
   messages: ModelMessage[];
   tools?: ToolDefinition[] | string[];
@@ -50,14 +53,30 @@ export type BrainObjectOutput<T> = {
 };
 
 export interface LLMProvider {
-  name: string;
+  name: LLMProviderName;
   generate(input: BrainGenerateInput, tools?: ToolRegistry): Promise<BrainGenerateOutput>;
   generateObject?<T>(input: BrainObjectInput, tools?: ToolRegistry): Promise<BrainObjectOutput<T>>;
 }
 
 export interface ApiKeyResolver {
-  resolve(input: { userId?: string; keyId?: string; provider?: string }): Promise<{
-    provider: string;
+  resolve(input: { userId?: string; keyId?: string; provider?: LLMProviderName }): Promise<{
+    provider: LLMProviderName;
     apiKey?: string;
   }>;
+}
+
+export type LLMKeyRecord = {
+  id?: string;
+  userId: string;
+  provider: LLMProviderName;
+  apiKey: string;
+  name?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  metadata?: Record<string, unknown>;
+};
+
+export interface LLMKeyStore {
+  getLLMKey(input: { userId: string; provider: LLMProviderName; keyId?: string }): Promise<LLMKeyRecord | null>;
+  saveLLMKey?(record: LLMKeyRecord): Promise<LLMKeyRecord>;
 }

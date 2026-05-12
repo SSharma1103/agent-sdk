@@ -69,7 +69,7 @@ export function createDevUiServer(config: DevUiServerConfig): DevUiServer {
     },
     close() {
       return new Promise((resolveClose, reject) => {
-        server.close((error) => error ? reject(error) : resolveClose());
+        server.close((error) => (error ? reject(error) : resolveClose()));
       });
     },
   };
@@ -101,7 +101,8 @@ async function handleRequest(
   const sessionMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)$/);
   if (sessionMatch && request.method === "GET") {
     const session = registry.getSession(sessionMatch[1]);
-    if (!session) return sendJson(response, 404, { error: { code: "SESSION_NOT_FOUND", message: "Session not found" } });
+    if (!session)
+      return sendJson(response, 404, { error: { code: "SESSION_NOT_FOUND", message: "Session not found" } });
     sendJson(response, 200, { session });
     return;
   }
@@ -109,7 +110,8 @@ async function handleRequest(
   if (sessionMatch && request.method === "PATCH") {
     const body = await readJson<{ state?: Record<string, unknown> }>(request);
     const session = registry.updateSessionState(sessionMatch[1], body.state ?? {});
-    if (!session) return sendJson(response, 404, { error: { code: "SESSION_NOT_FOUND", message: "Session not found" } });
+    if (!session)
+      return sendJson(response, 404, { error: { code: "SESSION_NOT_FOUND", message: "Session not found" } });
     sendJson(response, 200, { session });
     return;
   }
@@ -151,7 +153,11 @@ async function runTarget(
   assertRunRequest(request);
   const target = registry.getTarget(request.targetType, request.targetName);
   if (!target) {
-    throw new DevUiHttpError(404, "TARGET_NOT_FOUND", `${request.targetType} "${request.targetName}" is not registered`);
+    throw new DevUiHttpError(
+      404,
+      "TARGET_NOT_FOUND",
+      `${request.targetType} "${request.targetName}" is not registered`,
+    );
   }
 
   const session = registry.ensureSession(request.sessionId);
@@ -165,30 +171,39 @@ async function runTarget(
     onEvent?.(event);
   };
 
-  const output = request.targetType === "agent"
-    ? await registry.config.sdk.runAgent(request.targetName, {
-      input: request.input,
-      sessionId: session.id,
-      metadata: request.metadata,
-    }, {
-      metadata: request.metadata,
-      emit: (event) => emit(event.type, event.payload),
-    })
-    : await registry.config.sdk.runTeam(request.targetName, {
-      input: request.input,
-      sessionId: session.id,
-      metadata: request.metadata,
-    }, {
-      metadata: request.metadata,
-      emit: (event) => emit(event.type, event.payload),
-    });
+  const output =
+    request.targetType === "agent"
+      ? await registry.config.sdk.runAgent(
+          request.targetName,
+          {
+            input: request.input,
+            sessionId: session.id,
+            metadata: request.metadata,
+          },
+          {
+            metadata: request.metadata,
+            emit: (event) => emit(event.type, event.payload),
+          },
+        )
+      : await registry.config.sdk.runTeam(
+          request.targetName,
+          {
+            input: request.input,
+            sessionId: session.id,
+            metadata: request.metadata,
+          },
+          {
+            metadata: request.metadata,
+            emit: (event) => emit(event.type, event.payload),
+          },
+        );
 
   registry.appendMessage(session.id, { role: "assistant", content: output.text, targetName: request.targetName });
   return { runId, output, events };
 }
 
 function normalizeEvent(runId: string, type: string, payload: unknown): DevUiEvent {
-  const objectPayload = payload && typeof payload === "object" ? payload as Record<string, unknown> : {};
+  const objectPayload = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
   return {
     id: createId("event"),
     runId,
@@ -213,7 +228,7 @@ async function readJson<T>(request: IncomingMessage): Promise<T> {
   const chunks: Buffer[] = [];
   for await (const chunk of request) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
   const text = Buffer.concat(chunks).toString("utf8");
-  return text ? JSON.parse(text) as T : {} as T;
+  return text ? (JSON.parse(text) as T) : ({} as T);
 }
 
 function sendJson(response: ServerResponse, status: number, body: unknown): void {
@@ -266,7 +281,11 @@ function errorStatus(error: unknown): number {
 }
 
 class DevUiHttpError extends Error {
-  constructor(readonly status: number, readonly code: string, message: string) {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+  ) {
     super(message);
   }
 }
