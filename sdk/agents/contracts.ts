@@ -22,6 +22,7 @@ export type AgentConfig = {
   tools?: string[];
   memory?: SessionMemory;
   metadata?: Record<string, unknown>;
+  hooks?: AgentHooks;
 };
 
 export type AgentDeps = {
@@ -29,6 +30,7 @@ export type AgentDeps = {
   tools?: ToolRegistry;
   memory?: SessionMemory;
   mcp?: McpCommandValidationOptions;
+  hooks?: AgentHooks;
 };
 
 export type AgentRunInput = {
@@ -44,6 +46,25 @@ export type AgentRunOutput = {
   usage: Usage;
   toolCalls?: ToolCall[];
   raw?: unknown;
+};
+
+export type AgentHookContext<TInput = AgentRunInput, TOutput = AgentRunOutput> = {
+  agentName: string;
+  input: TInput;
+  output?: TOutput;
+  error?: unknown;
+  toolCall?: ToolCall;
+  sessionId?: string;
+  metadata?: Record<string, unknown>;
+  context?: Record<string, unknown>;
+  runId?: string;
+};
+
+export type AgentHooks<TInput = AgentRunInput, TOutput = AgentRunOutput> = {
+  beforeRun?(context: AgentHookContext<TInput, TOutput>): Promise<void> | void;
+  afterRun?(context: AgentHookContext<TInput, TOutput>): Promise<void> | void;
+  onError?(context: AgentHookContext<TInput, TOutput>): Promise<void> | void;
+  onToolCall?(context: AgentHookContext<TInput, TOutput>): Promise<void> | void;
 };
 
 export type AgentMemoryState = {

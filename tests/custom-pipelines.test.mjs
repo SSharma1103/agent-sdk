@@ -594,6 +594,149 @@ test("agents build instruction and memory messages, persist sessions, and emit l
   assert.ok(second.text.includes("second"));
 });
 
+test("agent config hooks observe direct runs", async () => {
+  const provider = new EchoProvider();
+  const brain = new Brain({ providers: [provider] });
+  const calls = [];
+  const agent = new Agent(
+    {
+      name: "observer",
+      instructions: "Observe.",
+      model: "echo-model",
+      hooks: {
+        beforeRun: (context) => calls.push(["before", context.agentName, context.input.input]),
+        afterRun: (context) => calls.push(["after", context.output.agentName, context.output.text]),
+      },
+    },
+    { brain },
+  );
+
+  const output = await agent.run("hello hooks");
+
+  assert.equal(output.agentName, "observer");
+  assert.deepEqual(calls, [
+    ["before", "observer", "hello hooks"],
+    ["after", "observer", output.text],
+  ]);
+});
+
+test("agent dependency hooks run before config hooks", async () => {
+  const provider = new EchoProvider();
+  const brain = new Brain({ providers: [provider] });
+  const calls = [];
+  const agent = new Agent(
+    {
+      name: "ordered",
+      instructions: "Order hooks.",
+      model: "echo-model",
+      hooks: {
+        beforeRun: () => calls.push("config:before"),
+        afterRun: () => calls.push("config:after"),
+      },
+    },
+    {
+      brain,
+      hooks: {
+        beforeRun: () => calls.push("deps:before"),
+        afterRun: () => calls.push("deps:after"),
+      },
+    },
+  );
+
+  await agent.run("check order");
+
+  assert.deepEqual(calls, ["deps:before", "config:before", "deps:after", "config:after"]);
+});
+
+test("agent tool call hooks receive tool calls", async () => {
+  const provider = new ToolCallingProvider();
+  const tools = new ToolRegistry();
+  const toolCalls = [];
+  tools.register(new LocalToolConnector("lookup", async (input) => ({ value: `item-${input.id}` })));
+  const brain = new Brain({ providers: [provider], tools });
+  const agent = new Agent(
+    {
+      name: "tool-observer",
+      instructions: "Use tools.",
+      model: "tool-model",
+      tools: ["lookup"],
+      hooks: {
+        onToolCall: (context) => toolCalls.push(context.toolCall),
+      },
+    },
+    { brain },
+  );
+
+  const output = await agent.run("lookup item");
+
+  assert.equal(output.text, 'final:{"value":"item-42"}');
+  assert.deepEqual(toolCalls, [{ id: "call_1", name: "lookup", input: { id: 42 } }]);
+});
+
+test("agent error hooks observe failures without swallowing them", async () => {
+  const expectedError = new Error("provider failed");
+  const provider = {
+    name: "failing",
+    async generate() {
+      throw expectedError;
+    },
+  };
+  const brain = new Brain({ providers: [provider] });
+  const errors = [];
+  const agent = new Agent(
+    {
+      name: "failing-agent",
+      instructions: "Fail.",
+      model: "failing-model",
+      hooks: {
+        onError: (context) => errors.push(context.error),
+      },
+    },
+    { brain },
+  );
+
+  await assert.rejects(() => agent.run("explode"), (error) => error === expectedError);
+  assert.deepEqual(errors, [expectedError]);
+});
+
+test("agent hooks preserve PipelineRuntime hooks and agent events", async () => {
+  const provider = new EchoProvider();
+  const brain = new Brain({ providers: [provider] });
+  const calls = [];
+  const sdk = new AgentSDK({
+    hooks: {
+      beforeRun: () => calls.push("pipeline:before"),
+      afterRun: () => calls.push("pipeline:after"),
+    },
+  });
+  const agent = new Agent(
+    {
+      name: "pipeline-agent",
+      instructions: "Run through pipeline.",
+      model: "echo-model",
+      hooks: {
+        beforeRun: () => calls.push("agent:before"),
+        afterRun: () => calls.push("agent:after"),
+      },
+    },
+    { brain },
+  );
+
+  sdk.registerAgent(agent);
+  await sdk.runAgent("pipeline-agent", "through runtime", {
+    emit: (event) => calls.push(`event:${event.type}`),
+  });
+
+  assert.deepEqual(calls, [
+    "pipeline:before",
+    "agent:before",
+    "event:agent.started",
+    "agent:after",
+    "event:agent.completed",
+    "pipeline:after",
+  ]);
+});
+
 test("sdk registers agents and teams as pipelines, with specialist agents usable as tools", async () => {
   class ManagerProvider {
     name = "manager-provider";

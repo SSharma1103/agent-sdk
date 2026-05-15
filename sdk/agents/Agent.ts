@@ -16,6 +16,8 @@ import type {
   AgentMcpServerInfo,
   AgentConfig,
   AgentDeps,
+  AgentHookContext,
+  AgentHooks,
   AgentMemoryState,
   AgentRunInput,
   AgentRunOutput,
@@ -30,6 +32,7 @@ export class Agent {
   private readonly tools?: ToolRegistry;
   private readonly memory?: SessionMemory;
   private readonly mcpValidation?: McpCommandValidationOptions;
+  private readonly depsHooks?: AgentHooks;
   private readonly mcpServers = new Map<string, { connection: McpServerConnection; toolNames: string[] }>();
   private readonly mcpToolNames = new Set<string>();
 
@@ -43,6 +46,7 @@ export class Agent {
     this.tools = deps.tools ?? deps.brain.tools;
     this.memory = config.memory ?? deps.memory;
     this.mcpValidation = deps.mcp;
+    this.depsHooks = deps.hooks;
   }
 
   async run(input: AgentRunInput | string, context?: PipelineContext): Promise<AgentRunOutput> {
@@ -59,15 +63,24 @@ export class Agent {
       ...memoryMessages,
       { role: "user", content: runInput.input },
     ];
-
-    await emit(context, "agent.started", {
+    const hookContextBase: AgentHookContext = {
       agentName: this.name,
-      input: runInput.input,
+      input: runInput,
       sessionId: runInput.sessionId,
       metadata,
-    });
+      context: runInput.context,
+      runId: context?.runId,
+    };
 
     try {
+      await this.runHook("beforeRun", hookContextBase);
+      await emit(context, "agent.started", {
+        agentName: this.name,
+        input: runInput.input,
+        sessionId: runInput.sessionId,
+        metadata,
+      });
+
       const result = await this.brain.run({
         provider: this.config.provider,
         model: this.config.model,
@@ -76,6 +89,7 @@ export class Agent {
         metadata: { ...metadata, agentName: this.name, agentContext: runInput.context },
         onToolCall: async (call) => {
           toolCalls.push(call);
+          await this.runHook("onToolCall", { ...hookContextBase, toolCall: call });
           await emit(context, "agent.tool_call", { agentName: this.name, toolCall: call });
         },
       });
@@ -96,9 +110,11 @@ export class Agent {
         ]);
       }
 
+      await this.runHook("afterRun", { ...hookContextBase, output });
       await emit(context, "agent.completed", output);
       return output;
     } catch (error) {
+      await this.runHook("onError", { ...hookContextBase, error });
       await emit(context, "agent.failed", {
         agentName: this.name,
         error,
@@ -219,6 +235,14 @@ export class Agent {
     for (const toolName of toolNames) {
       if (!existing.has(toolName)) this.config.tools.push(toolName);
     }
+  }
+
+  private async runHook(
+    name: "beforeRun" | "afterRun" | "onError" | "onToolCall",
+    context: AgentHookContext,
+  ): Promise<void> {
+    await this.depsHooks?.[name]?.(context);
+    await this.config.hooks?.[name]?.(context);
   }
 }
 
