@@ -11,15 +11,17 @@
 2. [Errors](#errors)
 3. [Validation](#validation)
 4. [Core / Brain](#core--brain)
-5. [Orchestrator](#orchestrator)
-6. [Pipelines](#pipelines)
-7. [Tools](#tools)
-8. [Transport](#transport)
-9. [Storage](#storage)
-10. [Memory](#memory)
-11. [Auth](#auth)
-12. [Triggers](#triggers)
-13. [AgentSDK](#agentsdk)
+5. [Pipeline Registry](#pipeline-registry)
+6. [Pipeline Runtime](#pipeline-runtime)
+7. [Orchestrator](#orchestrator)
+8. [Pipelines](#pipelines)
+9. [Tools](#tools)
+10. [Transport](#transport)
+11. [Storage](#storage)
+12. [Memory](#memory)
+13. [Auth](#auth)
+14. [Triggers](#triggers)
+15. [AgentSDK](#agentsdk)
 
 ---
 
@@ -740,6 +742,70 @@ Supports:
 
 ---
 
+## Pipeline Registry
+
+### `PipelineRegistry`
+
+```ts
+export class PipelineRegistry {
+  constructor(pipelines?: Pipeline[]);
+  register(pipeline: Pipeline): void;
+  register(name: string, pipeline: Pipeline): void;
+  get<TPipeline extends Pipeline = Pipeline>(name: string): TPipeline | undefined;
+  require<TPipeline extends Pipeline = Pipeline>(name: string): TPipeline;
+  has(name: string): boolean;
+  list(): Pipeline[];
+  unregister(name: string): boolean;
+  clear(): void;
+}
+```
+
+Manages named pipeline registration and lookup. `require(name)` throws `PipelineNotFoundError` when no pipeline is registered.
+
+---
+
+## Pipeline Runtime
+
+### `PipelineRuntimeConfig`
+
+```ts
+export type PipelineRuntimeConfig = {
+  registry?: PipelineRegistry;
+  storage?: Storage;
+  logger?: Logger;
+  defaultMode?: ExecutionMode;
+  metadata?: Record<string, unknown>;
+  hooks?: PipelineHooks;
+  errorPolicy?: "throw" | "returnFallback";
+  fallbackOutput?: unknown;
+};
+```
+
+### `PipelineRuntime`
+
+```ts
+export class PipelineRuntime {
+  constructor(config?: PipelineRuntimeConfig);
+  runRegistered<T = unknown>(
+    name: string,
+    input: unknown,
+    options?: PipelineRunOptions,
+    registry?: PipelineRegistry,
+  ): Promise<T>;
+  run<T = unknown>(pipeline: Pipeline, input: unknown, options?: PipelineRunOptions): Promise<T>;
+  runNested<T = unknown>(
+    name: string,
+    input: unknown,
+    context?: PipelineContext,
+    options?: { registry?: PipelineRegistry; metadata?: Record<string, unknown> },
+  ): Promise<T>;
+}
+```
+
+Owns the pipeline execution lifecycle: validation, run IDs, hook ordering, storage updates, fallback policy, and emitted run metadata. `runNested` is used by declarative pipeline steps and executes child pipelines with the inherited parent context.
+
+---
+
 ## Orchestrator
 
 ### `Strategy`
@@ -756,6 +822,8 @@ Execution strategy for multi-step pipeline runs.
 
 ```ts
 export type OrchestratorConfig = {
+  registry?: PipelineRegistry;
+  runtime?: PipelineRuntime;
   storage?: Storage;
   logger?: Logger;
   defaultMode?: ExecutionMode;
@@ -770,6 +838,8 @@ Configuration for the Orchestrator.
 
 | Property         | Type                          | Description                       |
 | ---------------- | ----------------------------- | --------------------------------- |
+| `registry`       | `PipelineRegistry`            | Pipeline registry to compose      |
+| `runtime`        | `PipelineRuntime`             | Pipeline runtime to compose       |
 | `storage`        | `Storage`                     | Persistence layer                 |
 | `logger`         | `Logger`                      | Logger instance                   |
 | `defaultMode`    | `ExecutionMode`               | Default pipeline execution mode   |
@@ -784,15 +854,18 @@ Configuration for the Orchestrator.
 
 ```ts
 export class Orchestrator {
+  readonly registry: PipelineRegistry;
+  readonly runtime: PipelineRuntime;
   constructor(config?: OrchestratorConfig);
   registerPipeline(pipeline: Pipeline): void;
+  registerPipeline(name: string, pipeline: Pipeline): void;
   getPipeline(name: string): Pipeline | undefined;
   run<T = unknown>(name: string, input: unknown, options?: PipelineRunOptions): Promise<T>;
   runStrategy(strategy: Strategy, steps: Array<{ name: string; input: unknown }>): Promise<unknown[]>;
 }
 ```
 
-Manages pipeline registry, execution lifecycle, hooks, and error handling.
+Higher-level coordination facade for registered pipeline execution and strategy runs. It composes `PipelineRegistry` and `PipelineRuntime`; declarative nested pipeline steps use the runtime directly rather than the orchestrator.
 
 #### `constructor(config?)`
 
@@ -1146,77 +1219,6 @@ Protected helper to emit pipeline events.
 
 ---
 
-### `ScrapePipeline`
-
-```ts
-export class ScrapePipeline implements Pipeline<ScrapePipelineInput, unknown> {
-  readonly name = "scrape";
-  constructor(deps: { storage: Storage; scrape: (input: ScrapePipelineInput) => Promise<unknown> });
-  validate(input: ScrapePipelineInput): void;
-  run(input: ScrapePipelineInput): Promise<unknown>;
-}
-```
-
-Pipeline for web scraping operations.
-
-#### `ScrapePipelineInput`
-
-```ts
-export type ScrapePipelineInput = {
-  url: string;
-  strategy?: string;
-  maxDepth?: number;
-  maxPages?: number;
-  detailLevel?: string;
-  includeExternal?: boolean;
-};
-```
-
-| Property          | Type      | Description            |
-| ----------------- | --------- | ---------------------- |
-| `url`             | `string`  | Target URL to scrape   |
-| `strategy`        | `string`  | Scraping strategy      |
-| `maxDepth`        | `number`  | Max crawl depth        |
-| `maxPages`        | `number`  | Max pages to fetch     |
-| `detailLevel`     | `string`  | Detail level           |
-| `includeExternal` | `boolean` | Include external links |
-
-**Throws:** `Error` if `url` is missing
-
----
-
-### `OnboardingApiPipeline`
-
-```ts
-export class OnboardingApiPipeline implements Pipeline<OnboardingApiInput, unknown> {
-  readonly name = "onboarding-api";
-  constructor(deps: { brain: Brain; memory: SessionMemory });
-  run(input: OnboardingApiInput): Promise<unknown>;
-}
-```
-
-Pipeline for managing interactive onboarding sessions.
-
-#### `OnboardingApiInput`
-
-```ts
-export type OnboardingApiInput =
-  | {
-      operation: "createSession";
-      pipelineId: string;
-      fields: Array<{ id: string; question: string }>;
-      context?: string;
-    }
-  | { operation: "answer"; sessionId: string; fieldId: string; value: unknown };
-```
-
-| Operation         | Description                     |
-| ----------------- | ------------------------------- |
-| `"createSession"` | Create a new onboarding session |
-| `"answer"`        | Submit an answer for a field    |
-
----
-
 ### `DeclarativePipeline`
 
 ```ts
@@ -1225,7 +1227,12 @@ export class DeclarativePipeline implements Pipeline {
   readonly hooks;
   constructor(
     config: DeclarativePipelineConfig,
-    deps: { brain: Brain; tools: ToolRegistry; orchestrator?: Orchestrator },
+    deps: {
+      brain: Brain;
+      tools: ToolRegistry;
+      registry?: PipelineRegistry;
+      runtime?: PipelineRuntime;
+    },
   );
   run(input: unknown, context?: PipelineContext): Promise<unknown>;
 }
@@ -1240,7 +1247,8 @@ Pipeline defined via a declarative configuration of steps.
 | `config`            | `DeclarativePipelineConfig` | Step definitions                   |
 | `deps.brain`        | `Brain`                     | Brain for LLM steps                |
 | `deps.tools`        | `ToolRegistry`              | Tools for tool steps               |
-| `deps.orchestrator` | `Orchestrator`              | Required for nested pipeline steps |
+| `deps.registry`     | `PipelineRegistry`          | Registry for nested pipeline steps |
+| `deps.runtime`      | `PipelineRuntime`           | Runtime for nested pipeline steps  |
 
 **Features:**
 
@@ -1250,92 +1258,6 @@ Pipeline defined via a declarative configuration of steps.
 - Timeout support
 - Fallback on failure
 - Event emission for each step
-
----
-
-### `EmailPipeline`
-
-```ts
-export class EmailPipeline implements Pipeline<EmailPipelineInput, EmailPipelineOutput> {
-  readonly name = "email";
-  constructor(deps: EmailPipelineDeps);
-  validate(input: EmailPipelineInput): void;
-  run(input: EmailPipelineInput): Promise<EmailPipelineOutput>;
-}
-```
-
-Pipeline for email automation with workflow rules and AI replies.
-
-#### `EmailPipelineDeps`
-
-```ts
-export type EmailPipelineDeps = {
-  storage: Storage;
-  brain: Brain;
-  tools?: ToolRegistry;
-  shareBaseUrl?: string;
-  defaultModel?: string;
-  defaultProvider?: string;
-  hooks?: EmailPipelineHooks;
-};
-```
-
-#### `EmailPipelineHooks`
-
-```ts
-export type EmailPipelineHooks = {
-  matchRule?(rule, email, pipeline): boolean | Promise<boolean>;
-  onRuleMatched?(rule, email, pipeline): EmailPipelineOutput | void | Promise<...>;
-  onNoMatchingRule?(email, pipeline): EmailPipelineOutput | void | Promise<...>;
-  buildMessages?(email, pipeline): ModelMessage[] | Promise<ModelMessage[]>;
-  selectTools?(email, pipeline, tools?): ToolDefinition[] | string[] | undefined | Promise<...>;
-};
-```
-
-#### `EmailPipelineInput`
-
-```ts
-export type EmailPipelineInput =
-  | { operation: "ensure"; userId: string }
-  | { operation: "updateConfig"; userId: string; patch: EmailPipelineConfigPatch }
-  | { operation: "addWorkflowRule"; userId: string; rule: Omit<WorkflowRule, "id"> }
-  | { operation: "processIncomingEmail"; token: string; email: IncomingEmail }
-  | { operation: "stats"; userId: string };
-```
-
-#### `EmailPipelineOutput`
-
-```ts
-export type EmailPipelineOutput =
-  | EmailPipelineRecord
-  | WorkflowRule
-  | { handled: "rule" | "brain" | "skipped"; rule?: WorkflowRule; reply?: string; usage?: Usage }
-  | { rulesHandled: number; brainReplies: number; tokensUsed: number };
-```
-
-#### `IncomingEmail`
-
-```ts
-export type IncomingEmail = {
-  threadId: string;
-  from: string;
-  subject: string;
-  body: string;
-};
-```
-
-#### `EmailPipelineConfigPatch`
-
-```ts
-export type EmailPipelineConfigPatch = Partial<{
-  name: string;
-  context: string;
-  model: string;
-  provider: string;
-  keyId: string | null;
-  agentmailInboxId: string | null;
-}>;
-```
 
 ---
 
@@ -2089,7 +2011,7 @@ The following are re-exported from `sdk/index.ts`:
 - `AgentSDK`
 - `Brain`, `OpenAIProvider`, `AnthropicProvider`, `LocalModelProvider`
 - `Orchestrator`
-- `PipelineBase`, `DeclarativePipeline`, `ScrapePipeline`, `OnboardingApiPipeline`, `EmailPipeline`
+- `PipelineBase`, `PipelineRegistry`, `PipelineRuntime`, `DeclarativePipeline`
 - `ToolRegistry`, `LocalToolConnector`, `TransportToolConnector`
 - `MemoryStore`, `PrismaStore`, `InMemorySessionStore`
 - `HttpTransport`, `WebSocketTransport`, `StdioTransport`, `QueueTransport`

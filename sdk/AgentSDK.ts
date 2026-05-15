@@ -44,11 +44,7 @@ export class AgentSDK {
     }
 
     if (!maybePipeline) throw new Error("[AgentSDK] pipeline is required");
-    this.orchestrator.registerPipeline({
-      name: nameOrPipeline,
-      run: maybePipeline.run.bind(maybePipeline),
-      validate: maybePipeline.validate?.bind(maybePipeline),
-    });
+    this.orchestrator.registerPipeline(nameOrPipeline, maybePipeline);
   }
 
   runPipeline<T = unknown>(name: string, input: unknown, options?: PipelineRunOptions): Promise<T> {

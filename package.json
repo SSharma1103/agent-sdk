@@ -1,6 +1,6 @@
 {
   "name": "@shivamsharma11/agent-sdk",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Framework-agnostic TypeScript SDK for building agents, agent teams, tools, pipelines, and dev UI workflows.",
   "license": "MIT",
   "type": "module",

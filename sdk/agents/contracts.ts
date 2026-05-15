@@ -88,4 +88,6 @@ export type AgentTeamRunOutput = {
   raw?: unknown;
 };
 
+export type AgentTeamTool = ToolConnector<AgentToolInput, AgentTeamRunOutput>;
+
 export type AgentRunContext = PipelineContext;

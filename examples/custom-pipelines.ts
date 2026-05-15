@@ -58,7 +58,7 @@ sdk.registerPipeline(
         },
       ],
     },
-    { brain, tools, orchestrator: sdk.orchestrator },
+    { brain, tools, registry: sdk.orchestrator.registry, runtime: sdk.orchestrator.runtime },
   ),
 );
 

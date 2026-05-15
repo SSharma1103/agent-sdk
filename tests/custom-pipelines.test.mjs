@@ -1,18 +1,22 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
+import * as sdkModule from "../dist/sdk/index.js";
+
+const {
   Agent,
   AgentSDK,
   AgentTeam,
   Brain,
   DeclarativePipeline,
-  EmailPipeline,
   InMemorySessionStore,
   LocalToolConnector,
   LocalModelProvider,
   MemoryStore,
   OAuthProvider,
   Orchestrator,
+  PipelineRegistry,
+  PipelineRuntime,
+  PipelineNotFoundError,
   StdioTransport,
   ToolRegistry,
   ToolExecutionError,
@@ -21,7 +25,7 @@ import {
   WebSocketTransport,
   WebhookTrigger,
   CronTrigger,
-} from "../dist/sdk/index.js";
+} = sdkModule;
 
 class EchoProvider {
   name = "echo";
@@ -124,6 +128,46 @@ test("orchestrator can recover from errors with onError fallback", async () => {
   assert.deepEqual(await sdk.runPipeline("fails", {}), { recovered: "boom" });
 });
 
+test("pipeline registry manages named pipelines and aliases", async () => {
+  const registry = new PipelineRegistry();
+  const calls = [];
+  const pipeline = {
+    name: "original",
+    hooks: {},
+    inputSchema: {
+      safeParse(input) {
+        return input && typeof input.value === "number"
+          ? { success: true, data: input }
+          : { success: false, error: [{ path: ["value"], message: "Required" }] };
+      },
+    },
+    validate(input) {
+      calls.push(input.value);
+    },
+    async run(input) {
+      return input.value * 2;
+    },
+  };
+
+  registry.register(pipeline);
+  registry.register("alias", pipeline);
+
+  assert.equal(registry.has("original"), true);
+  assert.equal(registry.has("alias"), true);
+  assert.deepEqual(
+    registry.list().map((item) => item.name),
+    ["original", "alias"],
+  );
+  assert.equal(await registry.require("alias").run({ value: 3 }), 6);
+  registry.require("alias").validate({ value: 4 });
+  assert.deepEqual(calls, [4]);
+  assert.equal(registry.unregister("original"), true);
+  assert.equal(registry.get("original"), undefined);
+  assert.throws(() => registry.require("missing"), (error) => error instanceof PipelineNotFoundError);
+  registry.clear();
+  assert.deepEqual(registry.list(), []);
+});
+
 test("declarative pipelines support mapping, conditions, retries, nested pipelines, and LLM steps", async () => {
   const provider = new EchoProvider();
   const tools = new ToolRegistry();
@@ -140,8 +184,9 @@ test("declarative pipelines support mapping, conditions, retries, nested pipelin
   );
 
   const brain = new Brain({ providers: [provider] });
-  const orchestrator = new Orchestrator();
-  orchestrator.registerPipeline({
+  const registry = new PipelineRegistry();
+  const runtime = new PipelineRuntime({ registry });
+  registry.register({
     name: "wrap",
     async run(input) {
       return { wrapped: input };
@@ -185,7 +230,7 @@ test("declarative pipelines support mapping, conditions, retries, nested pipelin
         },
       ],
     },
-    { brain, tools, orchestrator },
+    { brain, tools, registry, runtime },
   );
 
   const output = await pipeline.run(
@@ -202,41 +247,164 @@ test("declarative pipelines support mapping, conditions, retries, nested pipelin
   assert.ok(events.includes("pipeline.step.failed"));
 });
 
-test("email pipeline hooks customize rules, messages, and tool selection", async () => {
-  const provider = new EchoProvider();
-  const storage = new MemoryStore();
+test("declarative pipelines can run a tool step", async () => {
   const tools = new ToolRegistry();
-  const brain = new Brain({ providers: [provider], storage, tools });
-  tools.register(new LocalToolConnector("reply_to_thread", async () => ({ ok: true })));
+  const brain = new Brain({ providers: [new EchoProvider()] });
+  tools.register(new LocalToolConnector("double", (input) => input.value * 2));
 
-  const emailPipeline = new EmailPipeline({
-    brain,
-    storage,
-    tools,
-    hooks: {
-      matchRule: () => false,
-      buildMessages: (email) => [{ role: "user", content: `custom:${email.subject}` }],
-      selectTools: () => ["reply_to_thread"],
+  const pipeline = new DeclarativePipeline(
+    {
+      name: "tool-only",
+      steps: [{ id: "double", type: "tool", name: "double" }],
     },
-  });
+    { brain, tools },
+  );
 
-  const record = await emailPipeline.ensure("user_1");
-  await emailPipeline.updateConfig("user_1", { keyId: "key_1", provider: "echo", model: "echo-model" });
-  await emailPipeline.addWorkflowRule("user_1", {
-    match: { field: "subject", op: "contains", value: "Pricing" },
-    action: { kind: "reply", text: "static reply" },
-  });
+  assert.equal(await pipeline.run({ value: 4 }), 8);
+});
 
-  const output = await emailPipeline.processIncomingEmail(record.webhookToken, {
-    threadId: "thread_1",
-    from: "customer@example.com",
-    subject: "Pricing",
-    body: "hello",
-  });
+test("declarative pipelines can run an llm step through Brain", async () => {
+  const provider = new EchoProvider();
+  const tools = new ToolRegistry();
+  const brain = new Brain({ providers: [provider], tools });
 
-  assert.equal(output.handled, "brain");
-  assert.equal(output.reply, "custom:Pricing");
-  assert.deepEqual(provider.calls[0].tools, ["reply_to_thread"]);
+  const pipeline = new DeclarativePipeline(
+    {
+      name: "llm-only",
+      steps: [{ id: "draft", type: "llm", model: "echo-model", prompt: "hello brain" }],
+    },
+    { brain, tools },
+  );
+
+  const output = await pipeline.run({});
+
+  assert.equal(output.text, "hello brain");
+  assert.equal(provider.calls[0].model, "echo-model");
+});
+
+test("declarative pipelines can call an Agent registered as a tool", async () => {
+  const provider = new EchoProvider();
+  const tools = new ToolRegistry();
+  const brain = new Brain({ providers: [provider], tools });
+  const agent = new Agent(
+    {
+      name: "researcher",
+      instructions: "Research briefly.",
+      model: "echo-model",
+    },
+    { brain },
+  );
+  tools.register(agent.asTool());
+
+  const pipeline = new DeclarativePipeline(
+    {
+      name: "agent-tool",
+      steps: [
+        {
+          id: "research",
+          type: "tool",
+          name: "researcher",
+          mapInput: () => ({ input: "new models", sessionId: "session_agent_tool" }),
+        },
+      ],
+    },
+    { brain, tools },
+  );
+
+  const output = await pipeline.run({});
+
+  assert.equal(output.agentName, "researcher");
+  assert.ok(output.text.includes("new models"));
+});
+
+test("declarative pipelines can call an AgentTeam registered as a tool", async () => {
+  class NamedProvider {
+    name = "named-team";
+
+    async generate(input) {
+      return {
+        text: `${input.model}:${input.messages.at(-1).content}`,
+        usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+      };
+    }
+  }
+
+  const tools = new ToolRegistry();
+  const brain = new Brain({ providers: [new NamedProvider()], tools });
+  const first = new Agent({ name: "scraper", instructions: "Scrape.", model: "scraper-model" }, { brain });
+  const second = new Agent({ name: "judge", instructions: "Judge.", model: "judge-model" }, { brain });
+  const team = new AgentTeam({
+    name: "research_team",
+    mode: "sequential",
+    agents: [first, second],
+    brain,
+    tools,
+  });
+  tools.register(team.asTool());
+
+  const pipeline = new DeclarativePipeline(
+    {
+      name: "team-tool",
+      steps: [{ id: "team", type: "tool", name: "research_team", mapInput: () => ({ input: "launches" }) }],
+    },
+    { brain, tools },
+  );
+
+  const output = await pipeline.run({});
+
+  assert.equal(output.teamName, "research_team");
+  assert.equal(output.results.length, 2);
+  assert.equal(output.text, "judge-model:scraper-model:launches");
+});
+
+test("pipeline runtime can run nested DeclarativePipelines", async () => {
+  const tools = new ToolRegistry();
+  const storage = new MemoryStore();
+  const events = [];
+  const brain = new Brain({ providers: [new EchoProvider()], tools });
+  const registry = new PipelineRegistry();
+  const runtime = new PipelineRuntime({ registry, storage });
+  tools.register(new LocalToolConnector("append", (input) => `${input.text}!`));
+
+  const child = new DeclarativePipeline(
+    {
+      name: "child-declarative",
+      steps: [{ id: "append", type: "tool", name: "append" }],
+    },
+    { brain, tools },
+  );
+  const parent = new DeclarativePipeline(
+    {
+      name: "parent-declarative",
+      steps: [
+        {
+          id: "child",
+          type: "pipeline",
+          name: "child-declarative",
+          mapInput: (state) => ({ text: state.input }),
+        },
+      ],
+    },
+    { brain, tools, registry, runtime },
+  );
+
+  registry.register(child);
+  registry.register(parent);
+
+  assert.equal(
+    await runtime.runRegistered("parent-declarative", "nested", {
+      emit: (event) => events.push(event),
+    }),
+    "nested!",
+  );
+  assert.equal((await storage.getRuns()).length, 1);
+  assert.equal(new Set(events.map((event) => event.runId).filter(Boolean)).size, 1);
+});
+
+test("sdk index does not export app-specific pipeline classes", () => {
+  assert.equal("EmailPipeline" in sdkModule, false);
+  assert.equal("ScrapePipeline" in sdkModule, false);
+  assert.equal("OnboardingApiPipeline" in sdkModule, false);
 });
 
 test("brain executes tool calls until the provider returns final text", async () => {

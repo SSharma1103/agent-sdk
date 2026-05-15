@@ -7,7 +7,15 @@ import type {
   PipelineStep,
   PipelineStepState,
 } from "../contracts.js";
-import type { Orchestrator } from "../../orchestrator/Orchestrator.js";
+import type { PipelineRegistry } from "../PipelineRegistry.js";
+import type { PipelineRuntime } from "../PipelineRuntime.js";
+
+export type DeclarativePipelineDeps = {
+  brain: Brain;
+  tools: ToolRegistry;
+  registry?: PipelineRegistry;
+  runtime?: PipelineRuntime;
+};
 
 export class DeclarativePipeline implements Pipeline {
   readonly name: string;
@@ -15,7 +23,7 @@ export class DeclarativePipeline implements Pipeline {
 
   constructor(
     private readonly config: DeclarativePipelineConfig,
-    private readonly deps: { brain: Brain; tools: ToolRegistry; orchestrator?: Orchestrator },
+    private readonly deps: DeclarativePipelineDeps,
   ) {
     this.name = config.name;
     this.hooks = config.hooks;
@@ -108,12 +116,8 @@ export class DeclarativePipeline implements Pipeline {
     }
 
     if (step.type === "pipeline") {
-      if (!this.deps.orchestrator) throw new Error("[DeclarativePipeline] orchestrator dependency is required");
-      return this.deps.orchestrator.run(step.name, input, {
-        mode: context?.mode,
-        metadata: context?.metadata,
-        emit: context?.emit,
-      });
+      if (!this.deps.runtime) throw new Error("[DeclarativePipeline] pipeline runtime dependency is required");
+      return this.deps.runtime.runNested(step.name, input, context, { registry: this.deps.registry });
     }
 
     return state.current;
