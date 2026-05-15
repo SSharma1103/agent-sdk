@@ -4,9 +4,11 @@ import type { Agent } from "./Agent.js";
 import type {
   AgentRunInput,
   AgentRunOutput,
+  AgentTeamTool,
   AgentTeamConfig,
   AgentTeamRunInput,
   AgentTeamRunOutput,
+  AgentToolInput,
 } from "./contracts.js";
 import { TeamRuntime } from "./team/TeamRuntime.js";
 
@@ -33,6 +35,25 @@ export class AgentTeam {
     const output = await this.runByMode(runInput, context);
     await emit(context, "agent_team.completed", output);
     return output;
+  }
+
+  asTool(): AgentTeamTool {
+    return {
+      type: "local",
+      name: this.name,
+      description: `Run the ${this.name} agent team`,
+      schema: {
+        type: "object",
+        properties: {
+          input: { type: "string" },
+          sessionId: { type: "string" },
+          context: { type: "object" },
+          metadata: { type: "object" },
+        },
+        required: ["input"],
+      },
+      call: (input: AgentToolInput) => this.run(input),
+    };
   }
 
   private async runByMode(input: AgentRunInput, context?: PipelineContext): Promise<AgentTeamRunOutput> {

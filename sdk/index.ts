@@ -21,11 +21,9 @@ export * from "./agents/team/TeamState.js";
 
 export * from "./pipelines/contracts.js";
 export * from "./pipelines/PipelineBase.js";
-export * from "./pipelines/ScrapePipeline.js";
-export * from "./pipelines/OnboardingApiPipeline.js";
+export * from "./pipelines/PipelineRegistry.js";
+export * from "./pipelines/PipelineRuntime.js";
 export * from "./pipelines/declarative/DeclarativePipeline.js";
-export * from "./pipelines/email/EmailPipeline.js";
-export * from "./pipelines/email/types.js";
 
 export * from "./orchestrator/Orchestrator.js";
 export * from "./mcp/McpServerConfig.js";
